@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Derek Yao</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="#home">Derek Yao</a>
+      <nav class="site-nav" aria-label="Primary">
+        <a href="#home" data-section="home">Home</a>
+        <a href="#projects" data-section="projects">Projects</a>
+        <a href="#art" data-section="art">Art</a>
+        <a href="#writing" data-section="writing">Writing</a>
+        <a href="#contact" data-section="contact">Contact</a>
+      </nav>
+    </header>
+
+    <main>
+      <section id="section-home" class="section is-active" aria-label="Home">
+        <p class="home-intro">Hi, I’m Derek.</p>
+        <p>Add a sentence or two about yourself here.</p>
+      </section>
+
+      <section id="section-projects" class="section" aria-label="Projects">
+        <h1>Projects</h1>
+        <ul id="project-grid" class="project-grid"></ul>
+      </section>
+
+      <section id="section-art" class="section" aria-label="Art">
+        <h1>Art</h1>
+        <div id="art-grid" class="art-grid"></div>
+      </section>
+
+      <section id="section-writing" class="section" aria-label="Writing index">
+        <h1>Writing</h1>
+        <ul id="writings-list" class="writings-list"></ul>
+      </section>
+
+      <article
+        id="section-writing-article"
+        class="section writing-article"
+        aria-label="Writing post"
+      >
+        <p class="writing-article-back">
+          <a id="writing-article-back-link" href="#writing">← Writing</a>
+        </p>
+        <header class="writing-article-header">
+          <h1 id="writing-article-title"></h1>
+          <p class="writing-article-meta">
+            <time id="writing-article-date"></time>
+          </p>
+        </header>
+        <div id="writing-article-body" class="writing-article-body"></div>
+      </article>
+
+      <section id="section-contact" class="section" aria-label="Contact">
+        <h1>Contact</h1>
+        <div class="contact-block">
+          <p>
+            Email:
+            <a href="mailto:yaoderek06@gmail.com">yaoderek06@gmail.com</a>
+          </p>
+          <p>
+            Phone:
+            <a href="tel:+14255223218">425-522-3218</a>
+          </p>
+        </div>
+      </section>
+    </main>
+
+    <div
+      id="project-modal"
+      class="modal-backdrop"
+      hidden
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="modal-title"
+    >
+      <div class="modal">
+        <div class="modal-header">
+          <h2 id="modal-title"></h2>
+          <button type="button" id="modal-close" class="modal-close">
+            Close
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="carousel" aria-roledescription="carousel">
+            <div class="carousel-viewport">
+              <div class="carousel-track" id="carousel-track"></div>
+            </div>
+            <div class="carousel-controls">
+              <button type="button" id="carousel-prev">Prev</button>
+              <span class="carousel-counter" id="carousel-counter"></span>
+              <button type="button" id="carousel-next">Next</button>
+            </div>
+          </div>
+          <p id="modal-description" class="modal-description"></p>
+        </div>
+      </div>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>

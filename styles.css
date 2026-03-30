@@ -1,0 +1,483 @@
+/* Barebones layout — Helvetica, cream background, thin black rules */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: Helvetica, Arial, sans-serif;
+  background: #f5f0e6;
+  color: #111;
+  line-height: 1.5;
+}
+
+a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+a:hover {
+  text-decoration-thickness: 2px;
+}
+
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  background: #f5f0e6;
+  border-bottom: 1px solid #000;
+}
+
+.brand {
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.brand:hover {
+  text-decoration: underline;
+}
+
+.site-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem 1.25rem;
+}
+
+.site-nav a {
+  text-decoration: none;
+  font-size: 0.9375rem;
+}
+
+.site-nav a:hover {
+  text-decoration: underline;
+}
+
+.site-nav a[aria-current="page"] {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* Full-width, top-left content like Projects (not a centered narrow column) */
+main {
+  max-width: none;
+  margin: 0;
+  padding: 1.25rem 1.25rem 2rem;
+}
+
+main.main--writing-article {
+  max-width: 38rem;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 2rem 1.25rem 4rem;
+}
+
+/* Art — three per row, wraps; page scrolls vertically */
+.art-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  margin-top: 1.5rem;
+  align-items: start;
+}
+
+.art-grid img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid #000;
+  background: #fff;
+}
+
+@media (max-width: 48rem) {
+  .art-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 28rem) {
+  .art-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.section {
+  display: none;
+}
+
+.section.is-active {
+  display: block;
+}
+
+/* Page titles: upper left, full width of main (same intent as Projects) */
+.section > h1,
+#section-home .home-intro {
+  text-align: left;
+  width: 100%;
+  max-width: none;
+  margin-left: 0;
+  margin-right: 0;
+}
+
+.section h1 {
+  margin: 0 0 1rem;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+#section-home .home-intro {
+  margin: 0 0 1rem;
+}
+
+.writing-article.section h1 {
+  text-align: left;
+  font-size: 1.75rem;
+  line-height: 1.25;
+}
+
+.section p {
+  margin: 0 0 1rem;
+}
+
+.section-lead {
+  margin: 0 0 0.5rem;
+  font-size: 0.9375rem;
+}
+
+.section code {
+  font-size: 0.875em;
+}
+
+.home-intro {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+/* Projects — landscape image ratio (≈16:10), title + line below; scales with column width */
+.project-grid {
+  list-style: none;
+  padding: 0;
+  margin: 1rem 0 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.25rem;
+  align-items: start;
+}
+
+@media (max-width: 52rem) {
+  .project-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 32rem) {
+  .project-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.project-card {
+  margin: 0;
+  padding: 0;
+  border: 1px solid #000;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-height: 0;
+  transition: outline-offset 0.05s ease;
+}
+
+.project-card:focus {
+  outline: 1px solid #000;
+  outline-offset: 2px;
+}
+
+.project-card:focus:not(:focus-visible) {
+  outline: none;
+}
+
+.project-card:focus-visible {
+  outline: 1px solid #000;
+  outline-offset: 2px;
+}
+
+.project-card-img-wrap {
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  flex-shrink: 0;
+  border-bottom: 1px solid #000;
+  overflow: hidden;
+  background: #fff;
+}
+
+.project-card-img-wrap img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+.project-card-inner {
+  flex: 0 0 auto;
+  padding: 0.65rem 0.65rem 0.75rem;
+  min-height: 4.25rem;
+}
+
+.project-card h2 {
+  margin: 0 0 0.25rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.project-card p {
+  margin: 0;
+  font-size: 0.8125rem;
+}
+
+/* Writing — index list */
+.writings-list {
+  list-style: none;
+  padding: 0;
+  margin: 1.5rem 0 0;
+  border-top: 1px solid #000;
+}
+
+.writings-list li {
+  margin: 0;
+  padding: 0;
+  border-bottom: 1px solid #000;
+}
+
+.writings-list a {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.25rem 1rem;
+  padding: 0.75rem 0;
+  text-decoration: none;
+  color: inherit;
+}
+
+.writings-list a:hover .title {
+  text-decoration: underline;
+}
+
+.writings-list .title {
+  font-weight: 700;
+}
+
+.writings-list time {
+  font-size: 0.875rem;
+  white-space: nowrap;
+}
+
+/* Writing — single post (distinct from index list) */
+.writing-article-back {
+  margin: 0 0 1.5rem;
+  font-size: 0.9375rem;
+}
+
+.writing-article-back a {
+  text-decoration: none;
+}
+
+.writing-article-back a:hover {
+  text-decoration: underline;
+}
+
+.writing-article-header {
+  margin: 0 0 2rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid #000;
+}
+
+.writing-article-meta {
+  margin: 0.35rem 0 0;
+  font-size: 0.875rem;
+}
+
+.writing-article-body {
+  font-size: 1.0625rem;
+  line-height: 1.65;
+}
+
+.writing-article-body p {
+  margin: 0 0 1.15rem;
+}
+
+.writing-article-body p:last-child {
+  margin-bottom: 0;
+}
+
+/* Contact */
+.contact-block {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  border: 1px solid #000;
+}
+
+.contact-block p {
+  margin: 0 0 0.5rem;
+}
+
+.contact-block p:last-child {
+  margin-bottom: 0;
+}
+
+/* Modal */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(245, 240, 230, 0.92);
+  z-index: 100;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 1rem;
+  overflow-y: auto;
+}
+
+.modal-backdrop[hidden] {
+  display: none;
+}
+
+.modal {
+  width: 100%;
+  max-width: 32rem;
+  margin: auto 0;
+  border: 1px solid #000;
+  background: #f5f0e6;
+}
+
+.modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #000;
+}
+
+.modal-header h2 {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 700;
+}
+
+.modal-close {
+  flex-shrink: 0;
+  padding: 0.25rem 0.5rem;
+  font: inherit;
+  background: transparent;
+  border: 1px solid #000;
+  cursor: pointer;
+}
+
+.modal-close:hover {
+  text-decoration: underline;
+}
+
+.modal-body {
+  padding: 1rem;
+}
+
+.carousel {
+  position: relative;
+  border: 1px solid #000;
+  margin-bottom: 1rem;
+  background: #fff;
+}
+
+.carousel-viewport {
+  overflow: hidden;
+  aspect-ratio: 4 / 3;
+}
+
+.carousel-track {
+  display: flex;
+  height: 100%;
+  transition: transform 0.2s ease;
+}
+
+.carousel-slide {
+  flex: 0 0 100%;
+  height: 100%;
+}
+
+.carousel-slide img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.carousel-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  border-top: 1px solid #000;
+  background: #f5f0e6;
+}
+
+.carousel-controls button {
+  font: inherit;
+  padding: 0.25rem 0.6rem;
+  background: transparent;
+  border: 1px solid #000;
+  cursor: pointer;
+}
+
+.carousel-controls button:hover:not(:disabled) {
+  text-decoration: underline;
+}
+
+.carousel-controls button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.carousel-counter {
+  font-size: 0.8125rem;
+}
+
+.modal-description {
+  margin: 0;
+  font-size: 0.9375rem;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
