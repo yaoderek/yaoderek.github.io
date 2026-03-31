@@ -20,6 +20,83 @@ body {
   line-height: 1.5;
 }
 
+/* Custom cursor: inverts pixels under the dot (difference blend) */
+#custom-cursor {
+  display: none;
+  position: fixed;
+  width: calc(14px * 1.75);
+  height: calc(14px * 1.75);
+  margin: calc(-14px * 1.75 / 2) 0 0 calc(-14px * 1.75 / 2);
+  border-radius: 50%;
+  background: #fff;
+  mix-blend-mode: difference;
+  pointer-events: none;
+  z-index: 2147483646;
+  transform-origin: center center;
+  will-change: transform;
+}
+
+html.has-custom-cursor #custom-cursor {
+  display: block;
+}
+
+html.has-custom-cursor,
+html.has-custom-cursor body,
+html.has-custom-cursor button,
+html.has-custom-cursor a,
+html.has-custom-cursor [role="button"] {
+  cursor: none !important;
+}
+
+#custom-cursor.is-clicking {
+  animation: custom-cursor-click 0.42s cubic-bezier(0.34, 1.45, 0.64, 1) forwards;
+}
+
+@keyframes custom-cursor-click {
+  0% {
+    transform: scale(1);
+  }
+  28% {
+    transform: scale(0.48);
+  }
+  55% {
+    transform: scale(1.22);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@media (pointer: coarse) {
+  html.has-custom-cursor,
+  html.has-custom-cursor body,
+  html.has-custom-cursor button,
+  html.has-custom-cursor a {
+    cursor: auto !important;
+  }
+
+  html.has-custom-cursor #custom-cursor {
+    display: none !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.has-custom-cursor,
+  html.has-custom-cursor body,
+  html.has-custom-cursor button,
+  html.has-custom-cursor a {
+    cursor: auto !important;
+  }
+
+  #custom-cursor {
+    display: none !important;
+  }
+
+  #custom-cursor.is-clicking {
+    animation: none;
+  }
+}
+
 a {
   color: inherit;
   text-decoration: underline;
@@ -80,39 +157,110 @@ main {
   padding: 1.25rem 1.25rem 2rem;
 }
 
-main.main--writing-article {
+/* Narrow reading column — writing post only */
+main.main--article {
   max-width: 38rem;
   margin-left: auto;
   margin-right: auto;
   padding: 2rem 1.25rem 4rem;
 }
 
-/* Art — three per row, wraps; page scrolls vertically */
+/* Project detail — full width, huge carousel, wider centered copy */
+main.main--project-article {
+  max-width: none;
+  margin: 0;
+  padding: 1rem 1.25rem 2.5rem;
+}
+
+/* Same centered column as title, rule, and body (76rem) */
+main.main--project-article .writing-article-back {
+  max-width: 76rem;
+  margin: 0 auto 1rem;
+  text-align: left;
+}
+
+main.main--project-article .project-article-gallery {
+  width: 100%;
+  max-width: 76rem;
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: 0.25rem;
+  margin-bottom: 1.75rem;
+  padding: 0;
+}
+
+/* Wider peek of prev/next slide (~10% each side + gap) */
+main.main--project-article .project-carousel-slide {
+  flex-basis: 80%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+main.main--project-article .project-carousel-slide--solo {
+  flex-basis: 100%;
+}
+
+main.main--project-article .project-carousel-slide img {
+  display: block;
+  max-width: 100%;
+  max-height: min(88vh, 1400px);
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  border: 1px solid #000;
+  background: #fff;
+}
+
+/* Title + body: ~2× writing column (38rem → 76rem), centered */
+main.main--project-article .writing-article-header,
+main.main--project-article .writing-article-body {
+  max-width: 76rem;
+  margin-left: auto;
+  margin-right: auto;
+  text-align: center;
+}
+
+main.main--project-article .project-article.section h1 {
+  text-align: center;
+}
+
+main.main--project-article .writing-article-meta {
+  text-align: center;
+}
+
+main.main--project-article .writing-article-body p {
+  text-align: center;
+}
+
+/* Art — multi-column masonry: same width per column, packed top-to-bottom (no row dead space) */
 .art-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 1rem;
+  column-count: 3;
+  column-gap: 1rem;
   margin-top: 1.5rem;
-  align-items: start;
 }
 
 .art-grid img {
   display: block;
   width: 100%;
   height: auto;
+  margin-bottom: 1rem;
+  break-inside: avoid;
+  page-break-inside: avoid;
+  -webkit-column-break-inside: avoid;
   border: 1px solid #000;
   background: #fff;
 }
 
 @media (max-width: 48rem) {
   .art-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-count: 2;
   }
 }
 
 @media (max-width: 28rem) {
   .art-grid {
-    grid-template-columns: minmax(0, 1fr);
+    column-count: 1;
   }
 }
 
@@ -144,10 +292,126 @@ main.main--writing-article {
   margin: 0 0 1rem;
 }
 
-.writing-article.section h1 {
+.writing-article.section h1,
+.project-article.section h1 {
   text-align: left;
   font-size: 1.75rem;
   line-height: 1.25;
+}
+
+.project-article-gallery {
+  margin: 0 0 1.5rem;
+}
+
+.project-article-gallery[hidden] {
+  display: none !important;
+}
+
+.project-carousel-shell {
+  width: 100%;
+}
+
+/* Arrows sit on the image strip (overlay), not at screen edges */
+.project-carousel-viewport-wrap {
+  position: relative;
+  width: 100%;
+}
+
+.project-carousel-btn--overlay {
+  position: absolute;
+  top: 50%;
+  z-index: 2;
+  transform: translateY(-50%);
+  min-width: 2.5rem;
+  min-height: 2.5rem;
+  padding: 0.25rem 0.45rem;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+}
+
+#project-carousel-prev.project-carousel-btn--overlay {
+  left: 0.35rem;
+}
+
+#project-carousel-next.project-carousel-btn--overlay {
+  right: 0.35rem;
+}
+
+.project-carousel-counter-row {
+  margin: 0.6rem 0 0;
+  text-align: center;
+  font-size: 0.8125rem;
+}
+
+.project-carousel-counter-row[hidden] {
+  display: none !important;
+}
+
+.project-carousel-btn--overlay[hidden] {
+  display: none !important;
+}
+
+/* Horizontal carousel — main slide ~88% width so next/prev peek (Photos-style) */
+.project-carousel-viewport {
+  overflow: hidden;
+  width: 100%;
+}
+
+.project-carousel-track {
+  display: flex;
+  gap: 0.65rem;
+  transition: transform 0.38s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
+}
+
+.project-carousel-slide {
+  flex: 0 0 88%;
+  min-width: 0;
+}
+
+.project-carousel-slide--solo {
+  flex-basis: 100%;
+}
+
+.project-carousel-slide img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid #000;
+  background: #fff;
+}
+
+.project-carousel-btn {
+  font: inherit;
+  padding: 0.35rem 0.75rem;
+  background: transparent;
+  border: 1px solid #000;
+  cursor: pointer;
+}
+
+.project-carousel-btn--overlay:hover:not(:disabled) {
+  background: rgba(0, 0, 0, 0.72);
+  text-decoration: none;
+}
+
+.project-carousel-btn:hover:not(:disabled) {
+  text-decoration: underline;
+}
+
+.project-carousel-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.project-carousel-counter {
+  font-size: 0.8125rem;
+  min-width: 3.5rem;
+  text-align: center;
+}
+
+.project-article .writing-article-meta:empty {
+  display: none;
 }
 
 .section p {
@@ -190,6 +454,11 @@ main.main--writing-article {
   .project-grid {
     grid-template-columns: minmax(0, 1fr);
   }
+}
+
+a.project-card {
+  text-decoration: none;
+  color: inherit;
 }
 
 .project-card {
@@ -345,129 +614,6 @@ main.main--writing-article {
 
 .contact-block p:last-child {
   margin-bottom: 0;
-}
-
-/* Modal */
-.modal-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(245, 240, 230, 0.92);
-  z-index: 100;
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  padding: 1rem;
-  overflow-y: auto;
-}
-
-.modal-backdrop[hidden] {
-  display: none;
-}
-
-.modal {
-  width: 100%;
-  max-width: 32rem;
-  margin: auto 0;
-  border: 1px solid #000;
-  background: #f5f0e6;
-}
-
-.modal-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 0.75rem 1rem;
-  border-bottom: 1px solid #000;
-}
-
-.modal-header h2 {
-  margin: 0;
-  font-size: 1.125rem;
-  font-weight: 700;
-}
-
-.modal-close {
-  flex-shrink: 0;
-  padding: 0.25rem 0.5rem;
-  font: inherit;
-  background: transparent;
-  border: 1px solid #000;
-  cursor: pointer;
-}
-
-.modal-close:hover {
-  text-decoration: underline;
-}
-
-.modal-body {
-  padding: 1rem;
-}
-
-.carousel {
-  position: relative;
-  border: 1px solid #000;
-  margin-bottom: 1rem;
-  background: #fff;
-}
-
-.carousel-viewport {
-  overflow: hidden;
-  aspect-ratio: 4 / 3;
-}
-
-.carousel-track {
-  display: flex;
-  height: 100%;
-  transition: transform 0.2s ease;
-}
-
-.carousel-slide {
-  flex: 0 0 100%;
-  height: 100%;
-}
-
-.carousel-slide img {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-}
-
-.carousel-controls {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
-  padding: 0.5rem;
-  border-top: 1px solid #000;
-  background: #f5f0e6;
-}
-
-.carousel-controls button {
-  font: inherit;
-  padding: 0.25rem 0.6rem;
-  background: transparent;
-  border: 1px solid #000;
-  cursor: pointer;
-}
-
-.carousel-controls button:hover:not(:disabled) {
-  text-decoration: underline;
-}
-
-.carousel-controls button:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-.carousel-counter {
-  font-size: 0.8125rem;
-}
-
-.modal-description {
-  margin: 0;
-  font-size: 0.9375rem;
 }
 
 .sr-only {

@@ -1,8 +1,8 @@
 /**
  * Contact: edit index.html.
- * Projects: PROJECTS below.
- * Art: ART_IMAGES — paths only; grid is 3 per row in CSS.
- * Writing posts: WRITINGS — each needs slug, title, date, body (paragraphs separated by blank lines).
+ * Projects: PROJECTS — optional `date` (ISO); `images` show on detail page; `description` uses blank lines for paragraphs.
+ * Art: ART_IMAGES.
+ * Writing: WRITINGS.
  */
 
 const ART_IMAGES = [
@@ -37,9 +37,9 @@ const PROJECTS = [
   {
     id: "speakeasy",
     title: "speakeasy",
-    short: "Most recent project — add a one-line summary.",
+    short: "attention is all you need",
     description:
-      "Longer write-up for speakeasy: problem, what you built, tools, and outcomes. Swap thumb/images for real screenshots when you have them.",
+      "Longer write-up for speakeasy: problem, what you built, tools, and outcomes. Swap thumb/images for real screenshots when you have them.\n\nAdd more paragraphs with a blank line between them.",
     thumb: "images/placeholder-1.svg",
     images: [
       "images/placeholder-1.svg",
@@ -49,7 +49,7 @@ const PROJECTS = [
   {
     id: "dubflow",
     title: "dubflow",
-    short: "One-line description for dubflow.",
+    short: "a context-aware desktop focus companion",
     description:
       "Detail view copy for dubflow. Replace with your narrative and image paths.",
     thumb: "images/placeholder-2.svg",
@@ -58,7 +58,7 @@ const PROJECTS = [
   {
     id: "orbit",
     title: "orbit",
-    short: "One-line description for orbit.",
+    short: "ai-powered hyperlocal networking ",
     description: "Detail view copy for orbit.",
     thumb: "images/placeholder-3.svg",
     images: ["images/placeholder-3.svg", "images/placeholder-1.svg"],
@@ -66,7 +66,7 @@ const PROJECTS = [
   {
     id: "resumeRAG",
     title: "resumeRAG",
-    short: "One-line description for resumeRAG.",
+    short: "graphRAG visualizations for recruiter workflows.",
     description: "Detail view copy for resumeRAG.",
     thumb: "images/placeholder-1.svg",
     images: ["images/placeholder-1.svg", "images/placeholder-3.svg"],
@@ -74,10 +74,17 @@ const PROJECTS = [
   {
     id: "forklift",
     title: "forklift",
-    short: "Oldest listed project — one-line summary.",
-    description: "Detail view copy for forklift.",
-    thumb: "images/placeholder-2.svg",
-    images: ["images/placeholder-2.svg"],
+    short: "your ai-powered shortcut to open source",
+    description:
+      "Forklift is an ai-powered platform that helps users find repositories, understand codebases, discover issues, and start contributing.",
+    thumb: "images/projects/forklift-1.png",
+    images: [
+      "images/projects/forklift-1.png",
+      "images/projects/forklift-2.png",
+      "images/projects/forklift-3.png",
+      "images/projects/forklift-4.png",
+      "images/projects/forklift-5.png",
+    ],
   },
 ];
 
@@ -141,6 +148,7 @@ function escapeHtml(s) {
 const sections = {
   home: $("#section-home"),
   projects: $("#section-projects"),
+  projectArticle: $("#section-project-article"),
   art: $("#section-art"),
   writing: $("#section-writing"),
   writingArticle: $("#section-writing-article"),
@@ -154,30 +162,41 @@ function writingBySlug(slug) {
   return WRITINGS.find((w) => w.slug === slug);
 }
 
-function parseHash() {
-  const raw = (window.location.hash || "#home").slice(1);
-  const path = raw.trim().toLowerCase();
-  const parts = path.split("/").filter(Boolean);
+function projectById(id) {
+  const lower = id.toLowerCase();
+  return PROJECTS.find((p) => p.id.toLowerCase() === lower);
+}
 
-  if (parts[0] === "writing" && parts.length >= 2) {
-    const slug = parts.slice(1).join("/");
-    return { view: "writing-post", slug };
+function parseHash() {
+  const raw = (window.location.hash || "#home").slice(1).trim();
+  const segments = raw.split("/").filter(Boolean);
+  const head = (segments[0] || "home").toLowerCase();
+
+  if (head === "writing") {
+    if (segments.length >= 2) {
+      return {
+        view: "writing-post",
+        slug: segments.slice(1).join("/").toLowerCase(),
+      };
+    }
+    return { view: "writing-list" };
   }
-  if (parts[0] === "writing") {
-    return { view: "writing-list", slug: null };
+  if (head === "projects") {
+    if (segments.length >= 2) {
+      return { view: "project-post", projectId: segments.slice(1).join("/") };
+    }
+    return { view: "projects" };
   }
-  if (
-    parts.length === 1 &&
-    ["home", "projects", "art", "contact"].includes(parts[0])
-  ) {
-    return { view: parts[0], slug: null };
+  if (segments.length === 1 && ["home", "art", "contact"].includes(head)) {
+    return { view: head };
   }
-  return { view: "home", slug: null };
+  return { view: "home" };
 }
 
 function sectionNodeForView(view) {
   if (view === "home") return sections.home;
   if (view === "projects") return sections.projects;
+  if (view === "project-post") return sections.projectArticle;
   if (view === "art") return sections.art;
   if (view === "writing-list") return sections.writing;
   if (view === "writing-post") return sections.writingArticle;
@@ -185,15 +204,17 @@ function sectionNodeForView(view) {
   return sections.home;
 }
 
-function setDocumentTitle(view, post) {
+function setDocumentTitle(view, { post, project } = {}) {
   const base = "Derek Yao";
-  if (view === "home") document.title = base;
-  else if (view === "writing-post" && post)
+  if (view === "writing-post" && post)
     document.title = `${base} — ${post.title}`;
+  else if (view === "project-post" && project)
+    document.title = `${base} — ${project.title}`;
   else if (view === "writing-list") document.title = `${base} — Writing`;
   else if (view === "projects") document.title = `${base} — Projects`;
   else if (view === "art") document.title = `${base} — Art`;
   else if (view === "contact") document.title = `${base} — Contact`;
+  else if (view === "home") document.title = base;
   else document.title = base;
 }
 
@@ -203,7 +224,9 @@ function updateNavCurrent(view) {
     const writingActive =
       sec === "writing" &&
       (view === "writing-list" || view === "writing-post");
-    if (writingActive || sec === view) {
+    const projectsActive =
+      sec === "projects" && (view === "projects" || view === "project-post");
+    if (writingActive || projectsActive || sec === view) {
       a.setAttribute("aria-current", "page");
     } else {
       a.removeAttribute("aria-current");
@@ -233,23 +256,135 @@ function populateWritingArticle(post) {
   if (bodyEl) bodyEl.innerHTML = bodyToParagraphHtml(post.body);
 }
 
+let projectCarouselIndex = 0;
+
+function projectCarouselStepPx() {
+  const track = $("#project-carousel-track");
+  if (!track) return 0;
+  const slide = track.querySelector(".project-carousel-slide");
+  if (!slide) return 0;
+  const styles = getComputedStyle(track);
+  const gap = parseFloat(styles.gap || styles.columnGap) || 0;
+  return slide.getBoundingClientRect().width + gap;
+}
+
+function updateProjectCarousel() {
+  const track = $("#project-carousel-track");
+  const prev = $("#project-carousel-prev");
+  const next = $("#project-carousel-next");
+  const counter = $("#project-carousel-counter");
+  const counterRow = $(".project-carousel-counter-row");
+  const slides = track ? $all(".project-carousel-slide", track) : [];
+  const n = slides.length;
+
+  if (!track) return;
+
+  if (n === 0) {
+    if (counter) counter.textContent = "";
+    return;
+  }
+
+  projectCarouselIndex = Math.min(Math.max(0, projectCarouselIndex), n - 1);
+
+  const step = projectCarouselStepPx();
+  track.style.transform =
+    step > 0 ? `translateX(${-projectCarouselIndex * step}px)` : "none";
+
+  if (counter) counter.textContent = `${projectCarouselIndex + 1} / ${n}`;
+  if (prev) prev.disabled = projectCarouselIndex <= 0;
+  if (next) next.disabled = projectCarouselIndex >= n - 1;
+
+  const hideNav = n <= 1;
+  if (prev) prev.hidden = hideNav;
+  if (next) next.hidden = hideNav;
+  if (counterRow) counterRow.hidden = hideNav;
+}
+
+function populateProjectArticle(project) {
+  const gallery = $("#project-article-gallery");
+  const track = $("#project-carousel-track");
+  const titleEl = $("#project-article-title");
+  const metaEl = $("#project-article-meta");
+  const bodyEl = $("#project-article-body");
+  const images = project.images || [];
+
+  if (gallery && track) {
+    if (images.length === 0) {
+      gallery.hidden = true;
+      track.innerHTML = "";
+    } else {
+      gallery.hidden = false;
+      track.innerHTML = images
+        .map(
+          (src) =>
+            `<div class="project-carousel-slide"><img src="${escapeHtml(src)}" alt="" loading="lazy" /></div>`
+        )
+        .join("");
+      const n = images.length;
+      $all(".project-carousel-slide", track).forEach((el) => {
+        el.classList.toggle("project-carousel-slide--solo", n === 1);
+      });
+      projectCarouselIndex = 0;
+
+      const imgs = $all("img", track);
+      requestAnimationFrame(() => updateProjectCarousel());
+
+      Promise.all(
+        imgs.map(
+          (img) =>
+            new Promise((resolve) => {
+              if (img.complete) resolve();
+              else {
+                img.addEventListener("load", resolve, { once: true });
+                img.addEventListener("error", resolve, { once: true });
+              }
+            })
+        )
+      ).then(() => {
+        requestAnimationFrame(() => updateProjectCarousel());
+      });
+    }
+  }
+
+  if (titleEl) titleEl.textContent = project.title;
+  if (metaEl) {
+    if (project.date) {
+      metaEl.innerHTML = `<time datetime="${escapeHtml(project.date)}">${escapeHtml(formatDate(project.date))}</time>`;
+    } else {
+      metaEl.textContent = "";
+    }
+  }
+  if (bodyEl) bodyEl.innerHTML = bodyToParagraphHtml(project.description);
+}
+
 function showView(route) {
   let view = route.view;
   let post = null;
+  let project = null;
 
   if (view === "writing-post") {
     post = writingBySlug(route.slug);
     if (!post) {
-      const url = `${location.pathname}${location.search}#writing`;
-      history.replaceState(null, "", url);
+      history.replaceState(null, "", `${location.pathname}${location.search}#writing`);
       view = "writing-list";
     } else {
       populateWritingArticle(post);
     }
   }
 
+  if (view === "project-post") {
+    project = projectById(route.projectId);
+    if (!project) {
+      history.replaceState(null, "", `${location.pathname}${location.search}#projects`);
+      view = "projects";
+    } else {
+      populateProjectArticle(project);
+    }
+  }
+
   if (mainEl) {
-    mainEl.classList.toggle("main--writing-article", view === "writing-post");
+    mainEl.classList.toggle("main--article", view === "writing-post");
+    mainEl.classList.toggle("main--project-article", view === "project-post");
   }
 
   $all(".section").forEach((el) => el.classList.remove("is-active"));
@@ -257,9 +392,9 @@ function showView(route) {
   if (active) active.classList.add("is-active");
 
   updateNavCurrent(view);
-  setDocumentTitle(view, post);
+  setDocumentTitle(view, { post, project });
 
-  if (view === "projects" || view === "art") {
+  if (view === "projects" || view === "art" || view === "project-post") {
     window.scrollTo(0, 0);
   }
 }
@@ -274,12 +409,11 @@ function renderProjects() {
   grid.innerHTML = "";
   PROJECTS.forEach((p) => {
     const li = document.createElement("li");
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.className = "project-card";
-    btn.dataset.projectId = p.id;
-    btn.setAttribute("aria-label", `Open project: ${p.title}`);
-    btn.innerHTML = `
+    const a = document.createElement("a");
+    a.href = `#projects/${encodeURIComponent(p.id)}`;
+    a.className = "project-card";
+    a.setAttribute("aria-label", `Open project: ${p.title}`);
+    a.innerHTML = `
       <div class="project-card-img-wrap">
         <img src="${p.thumb}" alt="" loading="lazy" />
       </div>
@@ -288,7 +422,7 @@ function renderProjects() {
         <p>${escapeHtml(p.short)}</p>
       </div>
     `;
-    li.appendChild(btn);
+    li.appendChild(a);
     grid.appendChild(li);
   });
 }
@@ -299,13 +433,13 @@ function renderWritings() {
   list.innerHTML = "";
   WRITINGS.sort((a, b) => b.date.localeCompare(a.date)).forEach((w) => {
     const li = document.createElement("li");
-    const a = document.createElement("a");
-    a.href = `#writing/${encodeURIComponent(w.slug)}`;
-    a.innerHTML = `
+    const link = document.createElement("a");
+    link.href = `#writing/${encodeURIComponent(w.slug)}`;
+    link.innerHTML = `
       <span class="title">${escapeHtml(w.title)}</span>
       <time datetime="${escapeHtml(w.date)}">${escapeHtml(formatDate(w.date))}</time>
     `;
-    li.appendChild(a);
+    li.appendChild(link);
     list.appendChild(li);
   });
 }
@@ -318,95 +452,56 @@ function renderArtGrid() {
   ).join("");
 }
 
-/* Modal + carousel */
-const backdrop = $("#project-modal");
-const modalTitle = $("#modal-title");
-const modalDescription = $("#modal-description");
-const carouselTrack = $("#carousel-track");
-const btnPrev = $("#carousel-prev");
-const btnNext = $("#carousel-next");
-const counter = $("#carousel-counter");
-const btnClose = $("#modal-close");
-
-let carouselIndex = 0;
-let carouselImages = [];
-
-function setCarouselTransform() {
-  if (!carouselTrack) return;
-  carouselTrack.style.transform = `translateX(-${carouselIndex * 100}%)`;
-  const n = carouselImages.length;
-  if (counter) counter.textContent = n ? `${carouselIndex + 1} / ${n}` : "0 / 0";
-  if (btnPrev) btnPrev.disabled = carouselIndex <= 0;
-  if (btnNext) btnNext.disabled = carouselIndex >= n - 1;
-}
-
-function openModal(project) {
-  if (!backdrop) return;
-  carouselImages = project.images.slice();
-  carouselIndex = 0;
-  if (modalTitle) modalTitle.textContent = project.title;
-  if (modalDescription) modalDescription.textContent = project.description;
-  if (carouselTrack) {
-    carouselTrack.innerHTML = carouselImages
-      .map(
-        (src) => `
-      <div class="carousel-slide" role="group" aria-roledescription="slide">
-        <img src="${src}" alt="" />
-      </div>
-    `
-      )
-      .join("");
-  }
-  setCarouselTransform();
-  backdrop.hidden = false;
-  btnClose?.focus();
-  document.body.style.overflow = "hidden";
-}
-
-function closeModal() {
-  if (!backdrop) return;
-  backdrop.hidden = true;
-  document.body.style.overflow = "";
-}
-
-function projectById(id) {
-  return PROJECTS.find((p) => p.id === id);
-}
-
-/* Init */
 renderProjects();
 renderWritings();
 renderArtGrid();
 window.addEventListener("hashchange", onHashChange);
 onHashChange();
 
-$("#project-grid")?.addEventListener("click", (e) => {
-  const btn = e.target.closest(".project-card[data-project-id]");
-  if (!btn) return;
-  const p = projectById(btn.dataset.projectId);
-  if (p) openModal(p);
-});
-
-btnPrev?.addEventListener("click", () => {
-  if (carouselIndex > 0) {
-    carouselIndex -= 1;
-    setCarouselTransform();
+$("#project-carousel-prev")?.addEventListener("click", () => {
+  if (projectCarouselIndex > 0) {
+    projectCarouselIndex -= 1;
+    updateProjectCarousel();
   }
 });
 
-btnNext?.addEventListener("click", () => {
-  if (carouselIndex < carouselImages.length - 1) {
-    carouselIndex += 1;
-    setCarouselTransform();
+$("#project-carousel-next")?.addEventListener("click", () => {
+  const track = $("#project-carousel-track");
+  const n = track ? $all(".project-carousel-slide", track).length : 0;
+  if (projectCarouselIndex < n - 1) {
+    projectCarouselIndex += 1;
+    updateProjectCarousel();
   }
 });
 
-btnClose?.addEventListener("click", closeModal);
-
-backdrop?.addEventListener("click", (e) => {
-  if (e.target === backdrop) closeModal();
+window.addEventListener("resize", () => {
+  if (sections.projectArticle?.classList.contains("is-active")) {
+    updateProjectCarousel();
+  }
 });
 
-document.addEventListener("keydown", (e) => {
-  if (backdrop && !backdrop.hidden && e.key === "Escape") closeModal();
-});
+function initCustomCursor() {
+  const el = document.getElementById("custom-cursor");
+  if (!el) return;
+  if (window.matchMedia("(pointer: coarse)").matches) return;
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+  document.documentElement.classList.add("has-custom-cursor");
+
+  document.addEventListener("mousemove", (e) => {
+    el.style.left = `${e.clientX}px`;
+    el.style.top = `${e.clientY}px`;
+  });
+
+  document.addEventListener("mousedown", () => {
+    el.classList.remove("is-clicking");
+    void el.offsetWidth;
+    el.classList.add("is-clicking");
+  });
+
+  el.addEventListener("animationend", () => {
+    el.classList.remove("is-clicking");
+  });
+}
+
+initCustomCursor();

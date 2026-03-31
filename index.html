@@ -29,6 +29,58 @@
         <ul id="project-grid" class="project-grid"></ul>
       </section>
 
+      <article
+        id="section-project-article"
+        class="section project-article"
+        aria-label="Project"
+      >
+        <p class="writing-article-back">
+          <a href="#projects">← Projects</a>
+        </p>
+        <div id="project-article-gallery" class="project-article-gallery" hidden>
+          <div class="project-carousel-shell">
+            <div class="project-carousel-viewport-wrap">
+              <button
+                type="button"
+                id="project-carousel-prev"
+                class="project-carousel-btn project-carousel-btn--overlay"
+                aria-label="Previous image"
+              >
+                ←
+              </button>
+              <div
+                class="project-carousel-viewport"
+                role="region"
+                aria-roledescription="carousel"
+                aria-label="Project images"
+              >
+                <div id="project-carousel-track" class="project-carousel-track"></div>
+              </div>
+              <button
+                type="button"
+                id="project-carousel-next"
+                class="project-carousel-btn project-carousel-btn--overlay"
+                aria-label="Next image"
+              >
+                →
+              </button>
+            </div>
+          </div>
+          <p class="project-carousel-counter-row">
+            <span
+              id="project-carousel-counter"
+              class="project-carousel-counter"
+              aria-live="polite"
+            ></span>
+          </p>
+        </div>
+        <header class="writing-article-header">
+          <h1 id="project-article-title"></h1>
+          <p id="project-article-meta" class="writing-article-meta"></p>
+        </header>
+        <div id="project-article-body" class="writing-article-body"></div>
+      </article>
+
       <section id="section-art" class="section" aria-label="Art">
         <h1>Art</h1>
         <div id="art-grid" class="art-grid"></div>
@@ -71,37 +123,7 @@
       </section>
     </main>
 
-    <div
-      id="project-modal"
-      class="modal-backdrop"
-      hidden
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="modal-title"
-    >
-      <div class="modal">
-        <div class="modal-header">
-          <h2 id="modal-title"></h2>
-          <button type="button" id="modal-close" class="modal-close">
-            Close
-          </button>
-        </div>
-        <div class="modal-body">
-          <div class="carousel" aria-roledescription="carousel">
-            <div class="carousel-viewport">
-              <div class="carousel-track" id="carousel-track"></div>
-            </div>
-            <div class="carousel-controls">
-              <button type="button" id="carousel-prev">Prev</button>
-              <span class="carousel-counter" id="carousel-counter"></span>
-              <button type="button" id="carousel-next">Next</button>
-            </div>
-          </div>
-          <p id="modal-description" class="modal-description"></p>
-        </div>
-      </div>
-    </div>
-
+    <div id="custom-cursor" aria-hidden="true"></div>
     <script src="app.js"></script>
   </body>
 </html>
