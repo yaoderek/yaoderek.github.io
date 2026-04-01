@@ -1,7 +1,7 @@
 /**
  * Contact: edit index.html.
  * Projects: PROJECTS — optional `date` (ISO); `images` show on detail page; `description` uses blank lines for paragraphs. Lines starting with `## ` become section headings.
- * Art: ART_IMAGES.
+ * Art: ART_IMAGES — first viewport batch only, then more on scroll (IntersectionObserver).
  * Writing: WRITINGS.
  */
 
@@ -515,6 +515,10 @@ function showView(route) {
   ) {
     window.scrollTo(0, 0);
   }
+
+  if (view === "art") {
+    ensureArtGridForView();
+  }
 }
 
 function onHashChange() {
@@ -562,17 +566,81 @@ function renderWritings() {
   });
 }
 
-function renderArtGrid() {
+let artImagesAppended = 0;
+let artScrollObserver = null;
+
+function getArtColumnCount() {
+  if (window.matchMedia("(max-width: 28rem)").matches) return 1;
+  if (window.matchMedia("(max-width: 48rem)").matches) return 2;
+  return 3;
+}
+
+/** Rough count of images that fit in the initial viewport (matches .art-grid column breakpoints). */
+function estimateArtViewportBatchSize() {
+  const cols = getArtColumnCount();
+  const vh = window.innerHeight;
+  const overhead = 140;
+  const available = Math.max(200, vh - overhead);
+  const rowGuess = 220;
+  const rows = Math.max(2, Math.ceil(available / rowGuess));
+  return Math.min(ART_IMAGES.length, cols * rows + cols);
+}
+
+function getArtScrollBatchSize() {
+  return Math.max(getArtColumnCount() * 2, 6);
+}
+
+function appendArtImageBatch(count) {
   const grid = $("#art-grid");
-  if (!grid) return;
-  grid.innerHTML = ART_IMAGES.map(
-    (src) => `<img src="${escapeHtml(src)}" alt="" loading="lazy" />`
-  ).join("");
+  if (!grid || count <= 0) return;
+  const end = Math.min(artImagesAppended + count, ART_IMAGES.length);
+  for (let i = artImagesAppended; i < end; i++) {
+    const img = document.createElement("img");
+    img.alt = "";
+    img.src = ART_IMAGES[i];
+    grid.appendChild(img);
+  }
+  artImagesAppended = end;
+  setupArtScrollLoad();
+}
+
+function setupArtScrollLoad() {
+  if (artScrollObserver) {
+    artScrollObserver.disconnect();
+    artScrollObserver = null;
+  }
+  if (artImagesAppended >= ART_IMAGES.length) return;
+  const grid = $("#art-grid");
+  const imgs = grid ? grid.querySelectorAll("img") : [];
+  const last = imgs[imgs.length - 1];
+  if (!last) return;
+
+  artScrollObserver = new IntersectionObserver(
+    (entries) => {
+      if (!entries.some((e) => e.isIntersecting)) return;
+      if (artScrollObserver) {
+        artScrollObserver.disconnect();
+        artScrollObserver = null;
+      }
+      appendArtImageBatch(getArtScrollBatchSize());
+    },
+    { root: null, rootMargin: "280px", threshold: 0.01 }
+  );
+  artScrollObserver.observe(last);
+}
+
+/** First visit to Art: load a viewport-sized batch; further images load as the user scrolls. */
+function ensureArtGridForView() {
+  if (ART_IMAGES.length === 0) return;
+  if (artImagesAppended === 0) {
+    appendArtImageBatch(estimateArtViewportBatchSize());
+  } else if (artImagesAppended < ART_IMAGES.length) {
+    setupArtScrollLoad();
+  }
 }
 
 renderProjects();
 renderWritings();
-renderArtGrid();
 window.addEventListener("hashchange", onHashChange);
 onHashChange();
 
@@ -595,6 +663,12 @@ $("#project-carousel-next")?.addEventListener("click", () => {
 window.addEventListener("resize", () => {
   if (sections.projectArticle?.classList.contains("is-active")) {
     updateProjectCarousel();
+  }
+  if (
+    sections.art?.classList.contains("is-active") &&
+    artImagesAppended < ART_IMAGES.length
+  ) {
+    setupArtScrollLoad();
   }
 });
 
