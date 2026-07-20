@@ -410,59 +410,63 @@
   />
 
   {#if isMobile}
-    <div class="mobile-layer">
+    <div id="main-content" class="mobile-layer">
       <MobileFiles
         {tree}
         initialPath={effectiveInitialPath}
         onnavigate={onMobileNavigate}
         navigateTo={mobileNavigateTo}
         onnavigated={() => (mobileNavigateTo = null)}
+        {reducedMotion}
       />
     </div>
   {:else}
-    {#each wins as win (win.id)}
-      <Window
-        {win}
-        active={win.id === activeId()}
-        onfocus={() => (wins = focus(wins, win.id))}
-        onclose={() => {
-          wins = close(wins, win.id);
-          // Return focus to whatever is now on top (after DOM settles).
-          tick().then(() => focusTopWindow());
-        }}
-        onminimize={() => (wins = minimize(wins, win.id))}
-        onfullscreen={() => (wins = toggleFullscreen(wins, win.id))}
-        onmove={(x, y) => (wins = move(wins, win.id, x, y))}
-        onmounted={(el) => registerWindowEl(win.id, el)}
-        onunmounted={() => unregisterWindowEl(win.id)}
-      >
-        {#if win.app === 'finder'}
-          <Finder
-            {tree}
-            initialSelection={(win.props.initialSelection as string | undefined) ??
-              null}
-            view={finderView}
-            active={win.id === topId}
-            navigateTo={finderNavigateTo}
-            onopen={openPath}
-            onnavigated={() => (finderNavigateTo = null)}
-          />
-        {:else if win.app === 'about'}
-          <AboutWindow />
-        {:else if win.app === 'project'}
-          <ProjectWindow {...win.props as ComponentProps<typeof ProjectWindow>} />
-        {:else if win.app === 'doc'}
-          <DocWindow {...win.props as ComponentProps<typeof DocWindow>} />
-        {:else if win.app === 'gallery'}
-          <GalleryWindow
-            {...win.props as ComponentProps<typeof GalleryWindow>}
-            active={win.id === topId}
-          />
-        {:else if win.app === 'trash'}
-          <TrashWindow />
-        {/if}
-      </Window>
-    {/each}
+    <!-- id="main-content": target for the skip-to-content link -->
+    <div id="main-content" class="windows-layer">
+      {#each wins as win (win.id)}
+        <Window
+          {win}
+          active={win.id === activeId()}
+          onfocus={() => (wins = focus(wins, win.id))}
+          onclose={() => {
+            wins = close(wins, win.id);
+            // Return focus to whatever is now on top (after DOM settles).
+            tick().then(() => focusTopWindow());
+          }}
+          onminimize={() => (wins = minimize(wins, win.id))}
+          onfullscreen={() => (wins = toggleFullscreen(wins, win.id))}
+          onmove={(x, y) => (wins = move(wins, win.id, x, y))}
+          onmounted={(el) => registerWindowEl(win.id, el)}
+          onunmounted={() => unregisterWindowEl(win.id)}
+        >
+          {#if win.app === 'finder'}
+            <Finder
+              {tree}
+              initialSelection={(win.props.initialSelection as string | undefined) ??
+                null}
+              view={finderView}
+              active={win.id === topId}
+              navigateTo={finderNavigateTo}
+              onopen={openPath}
+              onnavigated={() => (finderNavigateTo = null)}
+            />
+          {:else if win.app === 'about'}
+            <AboutWindow />
+          {:else if win.app === 'project'}
+            <ProjectWindow {...win.props as ComponentProps<typeof ProjectWindow>} />
+          {:else if win.app === 'doc'}
+            <DocWindow {...win.props as ComponentProps<typeof DocWindow>} />
+          {:else if win.app === 'gallery'}
+            <GalleryWindow
+              {...win.props as ComponentProps<typeof GalleryWindow>}
+              active={win.id === topId}
+            />
+          {:else if win.app === 'trash'}
+            <TrashWindow />
+          {/if}
+        </Window>
+      {/each}
+    </div>
   {/if}
 </div>
 
@@ -496,6 +500,17 @@
     background-position: center;
     background-size: cover;
     background-repeat: no-repeat;
+  }
+
+  /* Desktop windows layer: zero-size passthrough container (anchor target only) */
+  .windows-layer {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+
+  .windows-layer :global(*) {
+    pointer-events: auto;
   }
 
   /* Mobile layer: fills the area below the menu bar and above the dock */

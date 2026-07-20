@@ -106,13 +106,15 @@
       e.preventDefault();
       const focused = document.activeElement as HTMLElement;
       const idx = items.indexOf(focused);
-      const next = idx < 0 ? 0 : Math.min(idx + 1, items.length - 1);
+      // Wrap: ArrowDown at last item goes to first (WAI-ARIA menu behavior)
+      const next = idx < 0 ? 0 : (idx + 1) % items.length;
       items[next]?.focus();
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
       const focused = document.activeElement as HTMLElement;
       const idx = items.indexOf(focused);
-      const prev = idx <= 0 ? 0 : idx - 1;
+      // Wrap: ArrowUp at first item goes to last
+      const prev = idx <= 0 ? items.length - 1 : idx - 1;
       items[prev]?.focus();
     } else if (e.key === 'Home') {
       e.preventDefault();
@@ -123,20 +125,18 @@
     } else if (e.key === 'ArrowLeft') {
       e.preventDefault();
       const curIdx = menuOrder.indexOf(menuName);
-      if (curIdx > 0) {
-        const prev = menuOrder[curIdx - 1];
-        openMenu = prev;
-        // Focus first item in the newly opened menu after render
-        setTimeout(() => focusMenuItem(prev, 0), 0);
-      }
+      // Wrap: ArrowLeft at leftmost menu wraps to rightmost (macOS behavior)
+      const prev = menuOrder[(curIdx - 1 + menuOrder.length) % menuOrder.length];
+      openMenu = prev;
+      // Focus first item in the newly opened menu after render
+      setTimeout(() => focusMenuItem(prev, 0), 0);
     } else if (e.key === 'ArrowRight') {
       e.preventDefault();
       const curIdx = menuOrder.indexOf(menuName);
-      if (curIdx < menuOrder.length - 1) {
-        const next = menuOrder[curIdx + 1];
-        openMenu = next;
-        setTimeout(() => focusMenuItem(next, 0), 0);
-      }
+      // Wrap: ArrowRight at rightmost menu wraps to leftmost
+      const next = menuOrder[(curIdx + 1) % menuOrder.length];
+      openMenu = next;
+      setTimeout(() => focusMenuItem(next, 0), 0);
     }
   }
 

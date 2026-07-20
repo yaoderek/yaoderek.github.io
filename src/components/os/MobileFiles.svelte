@@ -14,6 +14,9 @@
     onnavigate?: ((path: string) => void) | null;
     navigateTo?: string | null;
     onnavigated?: (() => void) | null;
+    /** Passed from Desktop's reducedMotion state (View-menu toggle).
+     *  Combined with the local media-query result as a fallback. */
+    reducedMotion?: boolean;
   };
 
   let {
@@ -22,6 +25,7 @@
     onnavigate = null,
     navigateTo = null,
     onnavigated = null,
+    reducedMotion: propReducedMotion = false,
   }: Props = $props();
 
   // Stack of FS paths; top of stack = current view.
@@ -31,11 +35,13 @@
 
   const current = $derived(stack[stack.length - 1]);
 
-  // Reduced motion
-  const reducedMotion =
+  // Reduced motion: prop takes precedence (View-menu toggle from Desktop);
+  // media query stays as a fallback for OS-level preference.
+  const mediaReducedMotion =
     typeof window !== 'undefined' && typeof window.matchMedia === 'function'
       ? window.matchMedia('(prefers-reduced-motion: reduce)').matches
       : false;
+  const reducedMotion = $derived(propReducedMotion || mediaReducedMotion);
 
   // Depth key drives the slide animation class.
   let animDir = $state<'push' | 'pop' | null>(null);
