@@ -115,3 +115,35 @@ test('desktop opens a project window rendering its metadata', async () => {
   unmount(app);
   target.remove();
 });
+
+test('dock renders Finder label and restores minimized window via dock click', async () => {
+  const target = document.createElement('div');
+  document.body.appendChild(target);
+  const app = mount(Desktop, {
+    target,
+    props: { tree: fixtureTree, initialPath: null, showResume: false },
+  });
+  await new Promise((r) => setTimeout(r, 50));
+
+  // Dock should render the Finder label
+  expect(target.textContent).toContain('Finder');
+
+  // Minimize the finder window via the yellow traffic light
+  const minimizeBtn = target.querySelector<HTMLButtonElement>('button.light.min');
+  expect(minimizeBtn).not.toBeNull();
+  minimizeBtn!.click();
+  await new Promise((r) => setTimeout(r, 20));
+
+  // A restore button should now appear in the dock (minimized section)
+  const restoreBtn = target.querySelector<HTMLButtonElement>('[data-restore-id]');
+  expect(restoreBtn).not.toBeNull();
+
+  // Clicking it should restore: the restore button should disappear
+  restoreBtn!.click();
+  await new Promise((r) => setTimeout(r, 20));
+  const restoreBtnAfter = target.querySelector<HTMLButtonElement>('[data-restore-id]');
+  expect(restoreBtnAfter).toBeNull();
+
+  unmount(app);
+  target.remove();
+});

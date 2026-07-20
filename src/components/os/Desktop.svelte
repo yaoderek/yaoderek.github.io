@@ -9,6 +9,7 @@
     close,
     focus,
     minimize,
+    restore,
     toggleFullscreen,
     move,
     topWindow,
@@ -16,6 +17,7 @@
   import Window from './Window.svelte';
   import MenuBar from './MenuBar.svelte';
   import Finder from './Finder.svelte';
+  import Dock from './Dock.svelte';
   import AboutWindow from './apps/AboutWindow.svelte';
   import ProjectWindow from './apps/ProjectWindow.svelte';
   import DocWindow from './apps/DocWindow.svelte';
@@ -30,8 +32,6 @@
   };
 
   let { tree, initialPath = null, showResume }: Props = $props();
-  // showResume is intentionally unused until the Dock arrives (Task 9).
-  void showResume;
 
   let wins = $state<Win[]>([]);
 
@@ -150,6 +150,63 @@
   function activeId(): number | null {
     return topId;
   }
+
+  // Dock items ($derived so showResume is tracked reactively)
+  const dockItems = $derived([
+    {
+      id: 'finder',
+      label: 'Finder',
+      action: () => openPath('/'),
+    },
+    {
+      id: 'textedit',
+      label: 'TextEdit',
+      action: () => openPath('/writing'),
+    },
+    {
+      id: 'photos',
+      label: 'Photos',
+      action: () => openPath('/art'),
+    },
+    ...(showResume
+      ? [{
+          id: 'resume',
+          label: 'Résumé',
+          action: () => window.open('/resume.pdf', '_blank', 'noopener'),
+        }]
+      : []),
+    {
+      id: 'mail',
+      label: 'Mail',
+      action: () => { location.href = 'mailto:yaoderek06@gmail.com'; },
+    },
+    {
+      id: 'github',
+      label: 'GitHub',
+      action: () => window.open('https://github.com/yaoderek', '_blank', 'noopener'),
+    },
+  ]);
+
+  const dockTrailing = [
+    {
+      id: 'trash',
+      label: 'Trash',
+      action: () => {
+        wins = open(
+          wins,
+          {
+            app: 'trash',
+            title: 'Trash',
+            path: '/__trash__',
+            props: {},
+            w: SIZES.trash.w,
+            h: SIZES.trash.h,
+          },
+          viewport()
+        );
+      },
+    },
+  ];
 </script>
 
 <div class="desktop" style:background-image={`url(${wallpaper})`}>
@@ -160,6 +217,14 @@
     {finderView}
     {reducedMotion}
     ontogglereducedmotion={toggleReducedMotion}
+  />
+
+  <Dock
+    items={dockItems}
+    trailing={dockTrailing}
+    minimized={wins.filter((w) => w.minimized)}
+    onrestore={(id) => (wins = restore(wins, id))}
+    {reducedMotion}
   />
 
   {#each wins as win (win.id)}
