@@ -96,3 +96,22 @@ test('desktop with initialPath opens named window', async () => {
   unmount(app);
   target.remove();
 });
+
+test('desktop opens a project window rendering its metadata', async () => {
+  const target = document.createElement('div');
+  document.body.appendChild(target);
+  const app = mount(Desktop, {
+    target,
+    props: {
+      tree: fixtureTree,
+      initialPath: '/projects/my-project',
+      showResume: false,
+    },
+  });
+  await new Promise((r) => setTimeout(r, 50));
+  // ProjectWindow renders the one-liner and the stack metadata value.
+  expect(target.textContent).toContain('A cool project');
+  expect(target.textContent).toContain('TypeScript');
+  unmount(app);
+  target.remove();
+});

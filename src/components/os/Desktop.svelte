@@ -3,7 +3,7 @@
   import type { FSNode, AppId } from '../../lib/os/types';
   import type { Win } from '../../lib/os/windows';
   import { findNode } from '../../lib/os/fs';
-  import { onMount } from 'svelte';
+  import { onMount, type ComponentProps } from 'svelte';
   import {
     open,
     close,
@@ -17,6 +17,10 @@
   import MenuBar from './MenuBar.svelte';
   import Finder from './Finder.svelte';
   import AboutWindow from './apps/AboutWindow.svelte';
+  import ProjectWindow from './apps/ProjectWindow.svelte';
+  import DocWindow from './apps/DocWindow.svelte';
+  import GalleryWindow from './apps/GalleryWindow.svelte';
+  import TrashWindow from './apps/TrashWindow.svelte';
 
   type Props = {
     tree: FSNode;
@@ -181,12 +185,17 @@
         />
       {:else if win.app === 'about'}
         <AboutWindow />
-      {:else}
-        <pre style="padding:16px; overflow:auto; height:100%">{JSON.stringify(
-            win.props,
-            null,
-            2
-          )}</pre>
+      {:else if win.app === 'project'}
+        <ProjectWindow {...win.props as ComponentProps<typeof ProjectWindow>} />
+      {:else if win.app === 'doc'}
+        <DocWindow {...win.props as ComponentProps<typeof DocWindow>} />
+      {:else if win.app === 'gallery'}
+        <GalleryWindow
+          {...win.props as ComponentProps<typeof GalleryWindow>}
+          active={win.id === topId}
+        />
+      {:else if win.app === 'trash'}
+        <TrashWindow />
       {/if}
     </Window>
   {/each}

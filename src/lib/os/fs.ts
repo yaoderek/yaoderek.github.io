@@ -68,6 +68,7 @@ export function buildTree(input: TreeInput): FSNode {
         stack: p.stack,
         status: p.status,
         created: p.created,
+        thumbUrl: p.thumbUrl,
         imageUrls: p.imageUrls,
         bodyHtml: p.bodyHtml,
       };
