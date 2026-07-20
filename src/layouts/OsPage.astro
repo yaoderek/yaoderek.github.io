@@ -82,6 +82,16 @@ const ogImageAbsolute = Astro.site
     <meta property="og:image" content={ogImageAbsolute} />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:image" content={ogImageAbsolute} />
+    {
+      import.meta.env.PROD && (
+        <script
+          data-goatcounter="https://yaoderek.goatcounter.com/count"
+          async
+          src="//gc.zgo.at/count.js"
+          is:inline
+        ></script>
+      )
+    }
   </head>
   <body>
     <Desktop
