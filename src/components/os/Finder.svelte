@@ -233,7 +233,7 @@
   });
 </script>
 
-<div class="finder">
+<div class="finder" tabindex="-1">
   {#if view === 'columns'}
     <div class="columns" bind:this={scroller}>
       {#each folderColumns as folder (folder.path)}
@@ -329,6 +329,12 @@
     height: 100%;
     background: var(--win-bg);
     font-family: var(--chrome-font);
+    outline: none; /* suppress default; use :focus-visible below */
+  }
+
+  .finder:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: -2px;
   }
 
   /* ---- column view ---- */

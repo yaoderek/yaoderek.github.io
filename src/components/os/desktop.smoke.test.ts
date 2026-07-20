@@ -94,6 +94,8 @@ const fixtureTree: FSNode = {
 // Clean up location.hash after each test so tests don't bleed into each other.
 afterEach(() => {
   if (location.hash) history.replaceState({}, '', location.pathname);
+  // Remove any leftover keydown listeners added by tests
+  document.body.innerHTML = '';
 });
 
 test('desktop mounts, opens Finder at root without effect loops', async () => {
@@ -166,6 +168,48 @@ test('dock renders Finder label and restores minimized window via dock click', a
   await new Promise((r) => setTimeout(r, 20));
   const restoreBtnAfter = target.querySelector<HTMLButtonElement>('[data-restore-id]');
   expect(restoreBtnAfter).toBeNull();
+
+  unmount(app);
+  target.remove();
+});
+
+// a11y: windows render as dialogs with correct aria-label; Esc closes the top window.
+test('a11y: dialog role + aria-label present; Esc closes top window', async () => {
+  const target = document.createElement('div');
+  document.body.appendChild(target);
+  const app = mount(Desktop, {
+    target,
+    props: {
+      tree: fixtureTree,
+      initialPath: '/README.txt',
+      showResume: false,
+    },
+  });
+  await new Promise((r) => setTimeout(r, 50));
+
+  // The README.txt doc window + the Finder window should both be present.
+  // Check that at least one element has role="dialog" and aria-label="README.txt"
+  const dialogs = target.querySelectorAll('[role="dialog"]');
+  expect(dialogs.length).toBeGreaterThan(0);
+
+  const readmeDialog = target.querySelector('[role="dialog"][aria-label="README.txt"]');
+  expect(readmeDialog).not.toBeNull();
+
+  // The finder dialog should also be present
+  const finderDialog = target.querySelector('[role="dialog"][aria-label="derek\'s mac"]');
+  expect(finderDialog).not.toBeNull();
+
+  // Dispatch Escape — should close the top window (README.txt, which was opened last)
+  window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+  await new Promise((r) => setTimeout(r, 50));
+
+  // After Esc, README.txt dialog should be gone
+  const readmeAfter = target.querySelector('[role="dialog"][aria-label="README.txt"]');
+  expect(readmeAfter).toBeNull();
+
+  // Finder should still be present
+  const finderAfter = target.querySelector('[role="dialog"][aria-label="derek\'s mac"]');
+  expect(finderAfter).not.toBeNull();
 
   unmount(app);
   target.remove();

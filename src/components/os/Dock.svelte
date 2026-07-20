@@ -109,20 +109,24 @@
   }
 </script>
 
-<!-- Hot zone — always present, handles pointer entry from bottom edge -->
+<!-- Hot zone — always present, handles pointer entry from bottom edge.
+     role="presentation" is appropriate: this is a pointer-only affordance with
+     no semantic meaning; keyboard users reach the dock via focus-within instead. -->
 {#if !isTouch}
-  <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div
     class="hotzone"
+    role="presentation"
     onpointerenter={onHotzoneEnter}
   ></div>
 {/if}
 
-<!-- svelte-ignore a11y_no_static_element_interactions -->
+<!-- role="presentation" on the wrapper: the interactive content is the <nav>
+     inside; the wrapper itself is a layout/animation container. -->
 <div
   class="dock-wrapper"
   class:visible
   class:reduced={reducedMotion}
+  role="presentation"
   bind:this={dockEl}
   onpointerenter={onDockEnter}
   onpointerleave={onDockLeave}
@@ -330,8 +334,9 @@
     transform: translateY(calc(100% + 12px));
   }
 
-  /* Visible state */
-  .dock-wrapper.visible {
+  /* Visible state (mouse hover or keyboard focus within dock) */
+  .dock-wrapper.visible,
+  .dock-wrapper:focus-within {
     transform: translateY(0);
     pointer-events: auto;
   }
@@ -479,5 +484,12 @@
   .icon-btn:hover .tooltip,
   .icon-btn:focus-visible .tooltip {
     opacity: 1;
+  }
+
+  /* Focus ring for keyboard navigation */
+  .icon-btn:focus-visible {
+    outline: 2px solid var(--accent, #0064e1);
+    outline-offset: 2px;
+    border-radius: 9.68px;
   }
 </style>

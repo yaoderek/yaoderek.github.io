@@ -205,9 +205,11 @@
 
   <!-- Content -->
   {#key viewKey}
-    <!-- svelte-ignore a11y_no_static_element_interactions -->
+    <!-- role="presentation": this div is a CSS animation container only;
+         interactive content is inside (ul/buttons/app components). -->
     <div
       class="view-wrap"
+      role="presentation"
       class:push={animDir === 'push' && !reducedMotion}
       class:pop={animDir === 'pop' && !reducedMotion}
     >

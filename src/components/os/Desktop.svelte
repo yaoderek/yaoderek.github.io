@@ -4,7 +4,7 @@
   import type { Win } from '../../lib/os/windows';
   import { findNode } from '../../lib/os/fs';
   import { pathForWin, urlToOpenPath, legacyHashToPath, fsPathToUrl } from '../../lib/os/router';
-  import { onMount, type ComponentProps } from 'svelte';
+  import { onMount, tick, type ComponentProps } from 'svelte';
   import {
     open,
     close,
@@ -258,6 +258,58 @@
     return topId;
   }
 
+  // Map from window id → DOM root element (set via bind:this in Window.svelte's
+  // action — we use a plain record populated by registerWindowEl / unregisterWindowEl).
+  const windowEls: Record<number, HTMLElement> = {};
+
+  function registerWindowEl(id: number, el: HTMLElement) {
+    windowEls[id] = el;
+  }
+  function unregisterWindowEl(id: number) {
+    delete windowEls[id];
+  }
+
+  /** Move DOM focus into the top window element (or Finder if no windows). */
+  function focusTopWindow() {
+    const tw = topWindow(wins);
+    if (tw) {
+      const el = windowEls[tw.id];
+      if (el) el.focus();
+    }
+  }
+
+  // Esc: close the focused top window (guard: not typing; not while menu is open
+  // — MenuBar already handles & stopPropagation's its own Esc; this only fires
+  // when no menu dropdown is open).
+  // Pure-CSS animations honor prefers-reduced-motion; JS-driven ones (dock
+  // magnification, gallery slides, scroll behavior) are gated on reducedMotion.
+  // The View-menu toggle is authoritative for JS behavior; CSS media query
+  // handles pure-CSS animations independently.
+  function onDesktopKeydown(e: KeyboardEvent) {
+    if (e.key !== 'Escape') return;
+    // Guard: not in an input/textarea/contenteditable
+    const target = e.target as HTMLElement;
+    if (
+      target.tagName === 'INPUT' ||
+      target.tagName === 'TEXTAREA' ||
+      target.isContentEditable
+    ) return;
+    // Close the top window and move focus to the new top window
+    if (wins.length === 0) return;
+    const tw = topWindow(wins);
+    if (!tw) return;
+    wins = close(wins, tw.id);
+    // Return focus to the new top window (or nothing if all closed)
+    tick().then(() => {
+      focusTopWindow();
+    });
+  }
+
+  onMount(() => {
+    window.addEventListener('keydown', onDesktopKeydown);
+    return () => window.removeEventListener('keydown', onDesktopKeydown);
+  });
+
   // Mobile URL sync: push the current FS path to history when user navigates.
   function onMobileNavigate(path: string) {
     if (syncingFromPop) return;
@@ -327,6 +379,17 @@
 </script>
 
 <div class="desktop" style:background-image={`url(${wallpaper})`}>
+  <!-- Skip-to-content: visually hidden until focused, then revealed.
+       Targets the top window (or no-js noscript content on SEO pages). -->
+  <a
+    class="skip-link"
+    href="#main-content"
+    onclick={(e) => {
+      e.preventDefault();
+      focusTopWindow();
+    }}
+  >Skip to content</a>
+
   <MenuBar
     onopenpath={isMobile ? onMobileNavigate : openPath}
     onopenabout={openAbout}
@@ -362,10 +425,16 @@
         {win}
         active={win.id === activeId()}
         onfocus={() => (wins = focus(wins, win.id))}
-        onclose={() => (wins = close(wins, win.id))}
+        onclose={() => {
+          wins = close(wins, win.id);
+          // Return focus to whatever is now on top (after DOM settles).
+          tick().then(() => focusTopWindow());
+        }}
         onminimize={() => (wins = minimize(wins, win.id))}
         onfullscreen={() => (wins = toggleFullscreen(wins, win.id))}
         onmove={(x, y) => (wins = move(wins, win.id, x, y))}
+        onmounted={(el) => registerWindowEl(win.id, el)}
+        onunmounted={() => unregisterWindowEl(win.id)}
       >
         {#if win.app === 'finder'}
           <Finder
@@ -398,6 +467,28 @@
 </div>
 
 <style>
+  /* Visually-hidden skip link — shown on :focus-visible for keyboard users. */
+  .skip-link {
+    position: fixed;
+    top: -100%;
+    left: 8px;
+    z-index: 99999;
+    padding: 6px 14px;
+    background: var(--accent);
+    color: #fff;
+    font-size: 13px;
+    font-family: var(--chrome-font);
+    border-radius: 6px;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+
+  .skip-link:focus-visible {
+    top: 30px;
+    outline: 2px solid #fff;
+    outline-offset: 2px;
+  }
+
   .desktop {
     position: fixed;
     inset: 0;

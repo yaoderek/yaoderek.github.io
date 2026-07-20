@@ -63,9 +63,81 @@
     return () => document.removeEventListener('click', onDocumentClick, true);
   });
 
-  // Esc closes menus
+  // Menu name order for left/right navigation
+  const menuOrder: Array<'apple' | 'file' | 'view'> = ['apple', 'file', 'view'];
+
+  // Focus a menuitem by index within the currently open menu dropdown.
+  function focusMenuItem(menuName: 'apple' | 'file' | 'view', index: number) {
+    const bar = document.getElementById('menu-bar');
+    if (!bar) return;
+    // Find the open dropdown for this menu
+    const dropdown = bar.querySelector<HTMLElement>(`[data-menu="${menuName}"] .dropdown`);
+    if (!dropdown) return;
+    const items = Array.from(
+      dropdown.querySelectorAll<HTMLElement>('[role="menuitem"] button, [role="menuitem"] a')
+    );
+    const target = items[index];
+    if (target) target.focus();
+  }
+
+  // Keyboard handler for menu bar navigation
   function onKeyDown(e: KeyboardEvent) {
-    if (e.key === 'Escape') openMenu = null;
+    if (e.key === 'Escape') {
+      if (openMenu !== null) {
+        // Prevent Desktop's Esc handler from also closing a window
+        e.stopPropagation();
+        openMenu = null;
+      }
+      return;
+    }
+
+    if (openMenu === null) return;
+
+    const menuName = openMenu;
+    const bar = document.getElementById('menu-bar');
+    if (!bar) return;
+    const dropdown = bar.querySelector<HTMLElement>(`[data-menu="${menuName}"] .dropdown`);
+    if (!dropdown) return;
+    const items = Array.from(
+      dropdown.querySelectorAll<HTMLElement>('[role="menuitem"] button, [role="menuitem"] a')
+    );
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      const focused = document.activeElement as HTMLElement;
+      const idx = items.indexOf(focused);
+      const next = idx < 0 ? 0 : Math.min(idx + 1, items.length - 1);
+      items[next]?.focus();
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      const focused = document.activeElement as HTMLElement;
+      const idx = items.indexOf(focused);
+      const prev = idx <= 0 ? 0 : idx - 1;
+      items[prev]?.focus();
+    } else if (e.key === 'Home') {
+      e.preventDefault();
+      items[0]?.focus();
+    } else if (e.key === 'End') {
+      e.preventDefault();
+      items[items.length - 1]?.focus();
+    } else if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      const curIdx = menuOrder.indexOf(menuName);
+      if (curIdx > 0) {
+        const prev = menuOrder[curIdx - 1];
+        openMenu = prev;
+        // Focus first item in the newly opened menu after render
+        setTimeout(() => focusMenuItem(prev, 0), 0);
+      }
+    } else if (e.key === 'ArrowRight') {
+      e.preventDefault();
+      const curIdx = menuOrder.indexOf(menuName);
+      if (curIdx < menuOrder.length - 1) {
+        const next = menuOrder[curIdx + 1];
+        openMenu = next;
+        setTimeout(() => focusMenuItem(next, 0), 0);
+      }
+    }
   }
 
   onMount(() => {
@@ -96,7 +168,7 @@
 >
   {#if !isMobile}
     <!-- Apple glyph -->
-    <div class="menu-item-wrap">
+    <div class="menu-item-wrap" data-menu="apple">
       <button
         class="menu-title apple-btn"
         class:open={openMenu === 'apple'}
@@ -131,7 +203,7 @@
 
   {#if !isMobile}
     <!-- File menu -->
-    <div class="menu-item-wrap">
+    <div class="menu-item-wrap" data-menu="file">
       <button
         class="menu-title"
         class:open={openMenu === 'file'}
@@ -165,7 +237,7 @@
     </div>
 
     <!-- View menu -->
-    <div class="menu-item-wrap">
+    <div class="menu-item-wrap" data-menu="view">
       <button
         class="menu-title"
         class:open={openMenu === 'view'}

@@ -11,6 +11,8 @@
     onfullscreen: () => void;
     onfocus: () => void;
     onmove: (x: number, y: number) => void;
+    onmounted?: (el: HTMLElement) => void;
+    onunmounted?: () => void;
   };
 
   let {
@@ -22,7 +24,21 @@
     onfullscreen,
     onfocus,
     onmove,
+    onmounted,
+    onunmounted,
   }: Props = $props();
+
+  // Action: focus the window root on mount (brings keyboard focus into the window),
+  // and call register/unregister so Desktop can track DOM elements for focus return.
+  function windowMount(node: HTMLElement) {
+    node.focus();
+    onmounted?.(node);
+    return {
+      destroy() {
+        onunmounted?.();
+      },
+    };
+  }
 
   // Drag state
   let dragging = $state(false);
@@ -60,7 +76,10 @@
 </script>
 
 {#if !win.minimized}
-  <section
+  <!-- Use div (no implicit role) so role="dialog" can be applied freely without
+       a Svelte a11y warning. Dialog is an interactive ARIA landmark; this also
+       legitimately resolves any a11y_no_static_element_interactions warning. -->
+  <div
     class="window"
     class:active
     class:fullscreen={win.fullscreen}
@@ -69,10 +88,18 @@
     style:width={win.fullscreen ? undefined : `${win.w}px`}
     style:height={win.fullscreen ? undefined : `${win.h}px`}
     style:z-index={win.z}
+    role="dialog"
+    aria-label={win.title}
+    tabindex="-1"
     onpointerdown={onWindowPointerDown}
+    use:windowMount
   >
+    <!-- role="group" on the drag-handle header gives it an interactive role,
+         resolving a11y_no_static_element_interactions on the header element. -->
     <header
       class="titlebar"
+      role="group"
+      aria-label="Window controls"
       onpointerdown={onTitlePointerDown}
       onpointermove={onTitlePointerMove}
       onpointerup={onTitlePointerUp}
@@ -98,8 +125,8 @@
           }}><span class="glyph">−</span></button>
         <button
           class="light zoom"
-          aria-label="Full screen"
-          title="Full screen"
+          aria-label="Enter full screen"
+          title="Enter full screen"
           onclick={(e) => {
             e.stopPropagation();
             onfullscreen();
@@ -111,7 +138,7 @@
     <div class="body">
       {@render children()}
     </div>
-  </section>
+  </div>
 {/if}
 
 <style>
@@ -124,6 +151,9 @@
     border: 0.5px solid var(--win-border);
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
     overflow: hidden;
+    /* Windows receive programmatic focus for Esc handling — suppress visible outline
+       on the window root itself (focus is not keyboard-initiated here). */
+    outline: none;
   }
 
   .window.active {
