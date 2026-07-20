@@ -1,6 +1,8 @@
 ---
-title: First note
+title: reads
 created: 2026-01-15
 ---
 
-A shorter piece.
+stuff ive read/to read
+
+
