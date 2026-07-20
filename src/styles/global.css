@@ -1,0 +1,27 @@
+@import '@fontsource-variable/newsreader';
+
+@font-face {
+  font-family: 'ChicagoFLF';
+  src: url('/fonts/ChicagoFLF.ttf') format('truetype');
+  font-display: swap;
+}
+
+:root {
+  --chrome-font: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --pixel-font: 'ChicagoFLF', var(--chrome-font);
+  --serif-font: 'Newsreader Variable', Georgia, serif;
+  --accent: #0064e1;
+  --win-bg: #f5f5f4;
+  --win-border: rgba(0, 0, 0, 0.18);
+  --hairline: rgba(0, 0, 0, 0.1);
+  --text: #1d1d1f;
+  --text-dim: #6e6e73;
+  --titlebar-h: 28px;
+  --menubar-h: 24px;
+  --radius-win: 10px;
+  --shadow-win: 0 18px 50px rgba(0, 0, 0, 0.35), 0 0 0 0.5px rgba(0, 0, 0, 0.15);
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; overflow: hidden; font-family: var(--chrome-font); color: var(--text); }
+button { font: inherit; background: none; border: none; padding: 0; cursor: pointer; color: inherit; }
