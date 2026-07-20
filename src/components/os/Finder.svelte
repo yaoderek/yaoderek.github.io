@@ -35,9 +35,12 @@
   let selectedPath = $state<string | null>(initialSelection ?? null);
 
   // Adopt an externally requested selection (from Desktop.openPath), then clear.
+  // Always call onnavigated() when navigateTo is non-null so Desktop can reset
+  // the signal to null — even when the path equals the current selection.
+  // Avoid writing selectedPath when unchanged to stay loop-safe.
   $effect(() => {
-    if (navigateTo != null && navigateTo !== selectedPath) {
-      selectedPath = navigateTo;
+    if (navigateTo != null) {
+      if (navigateTo !== selectedPath) selectedPath = navigateTo;
       onnavigated?.();
     }
   });

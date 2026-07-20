@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { mount, unmount } from 'svelte';
-import { test, expect, beforeAll } from 'vitest';
+import { test, expect, beforeAll, vi } from 'vitest';
 import Desktop from './Desktop.svelte';
 import Finder from './Finder.svelte';
 import type { FSNode } from '../../lib/os/types';
@@ -101,6 +101,34 @@ test('Finder renders folder columns and a preview pane for a selected file', asy
   const text = target.textContent ?? '';
   expect(text).toContain('speakeasy.app');
   expect(text).toContain('shipped');
+
+  unmount(app);
+  target.remove();
+});
+
+test('onnavigated is called even when navigateTo equals the current selection', async () => {
+  // Regression: previously the signal would stay stuck non-null when navigateTo
+  // matched selectedPath, blocking subsequent same-path navigations.
+  const target = document.createElement('div');
+  document.body.appendChild(target);
+
+  const onnavigated = vi.fn();
+  const app = mount(Finder, {
+    target,
+    props: {
+      tree,
+      initialSelection: '/projects',
+      view: 'columns' as const,
+      active: false,
+      navigateTo: '/projects', // equals current selection
+      onopen: () => {},
+      onnavigated,
+    },
+  });
+  await new Promise((r) => setTimeout(r, 20));
+
+  // Signal must be cleared even though path didn't change.
+  expect(onnavigated).toHaveBeenCalledTimes(1);
 
   unmount(app);
   target.remove();
