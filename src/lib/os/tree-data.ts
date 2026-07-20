@@ -2,6 +2,7 @@ import { getCollection } from 'astro:content';
 import { getImage } from 'astro:assets';
 import type { ImageMetadata } from 'astro';
 import type { TreeInput } from './types';
+import { stripHtml } from './format';
 
 /**
  * README content, authored as real HTML (injected via {@html} by the Doc app).
@@ -24,11 +25,6 @@ function isoDate(value: Date | string): string {
     return value.toISOString().slice(0, 10);
   }
   return String(value).slice(0, 10);
-}
-
-/** Strip HTML tags to derive plain text (for word counts / blurbs). */
-function stripTags(html: string): string {
-  return html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
 }
 
 /** Produce an optimized URL string for a collection image import. */
@@ -92,7 +88,7 @@ export async function getTreeInput(
       title: entry.data.title,
       created: isoDate(entry.data.created),
       bodyHtml,
-      bodyText: stripTags(bodyHtml),
+      bodyText: stripHtml(bodyHtml),
     };
   });
 

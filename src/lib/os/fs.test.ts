@@ -4,7 +4,7 @@ import type { TreeInput } from './types';
 
 const fixture: TreeInput = {
   readme: {
-    text: 'Hello world. This is the README.',
+    text: '<p>Hi, I\'m Derek.</p><p>I study art &amp; CS.</p>',
     created: '2025-01-01',
   },
   projects: [
@@ -76,6 +76,25 @@ describe('buildTree', () => {
     expect(readme.path).toBe('/README.txt');
     expect(readme.open?.app).toBe('doc');
     expect((readme.open?.props as { title: string }).title).toBe('README.txt');
+  });
+
+  it('README node meta is [["Kind","Plain Text"],["Created",<formatted date>]]', () => {
+    const readme = root.children!.find((c) => c.name === 'README.txt')!;
+    const meta = readme.meta!;
+    expect(meta).toBeDefined();
+    expect(meta[0]).toEqual(['Kind', 'Plain Text']);
+    expect(meta[1][0]).toBe('Created');
+    // fixture created = '2025-01-01' → formatDate → 'Jan 1, 2025'
+    expect(meta[1][1]).toBe('Jan 1, 2025');
+    expect(meta.length).toBe(2);
+  });
+
+  it('README node blurb is plain-text with HTML stripped, entities decoded, whitespace collapsed', () => {
+    const readme = root.children!.find((c) => c.name === 'README.txt')!;
+    expect(readme.blurb).toBeDefined();
+    expect(readme.blurb).toContain("Hi, I'm Derek.");
+    expect(readme.blurb).toContain('I study art & CS.');
+    expect(readme.blurb).not.toMatch(/<[^>]+>/); // no HTML tags
   });
 
   it('projects folder node is a Folder with icon folder', () => {

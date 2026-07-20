@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { formatDate, wordCount, firstSentence } from './format';
+import { formatDate, wordCount, firstSentence, stripHtml } from './format';
 
 describe('formatDate', () => {
   it('formats a date ISO string to "Mar 1, 2026"', () => {
@@ -62,5 +62,33 @@ describe('firstSentence', () => {
 
   it('returns full text if no sentence boundary and under 140 chars', () => {
     expect(firstSentence('No period here')).toBe('No period here');
+  });
+});
+
+describe('stripHtml', () => {
+  it('strips HTML tags and collapses whitespace', () => {
+    const result = stripHtml('<p>Hi, I\'m Derek.</p><p>I study art &amp; CS.</p>');
+    expect(result).toContain("Hi, I'm Derek.");
+    expect(result).toContain('I study art & CS.');
+  });
+
+  it('decodes &amp; entity', () => {
+    expect(stripHtml('<p>art &amp; code</p>')).toBe('art & code');
+  });
+
+  it('decodes &lt; and &gt; entities', () => {
+    expect(stripHtml('<p>a &lt; b &gt; c</p>')).toBe('a < b > c');
+  });
+
+  it('collapses multiple spaces/newlines to a single space', () => {
+    expect(stripHtml('<p>foo</p>   <p>bar</p>')).toBe('foo bar');
+  });
+
+  it('trims leading and trailing whitespace', () => {
+    expect(stripHtml('  <b>hello</b>  ')).toBe('hello');
+  });
+
+  it('returns empty string for empty input', () => {
+    expect(stripHtml('')).toBe('');
   });
 });

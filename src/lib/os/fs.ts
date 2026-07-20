@@ -1,5 +1,5 @@
 import type { FSNode, TreeInput } from './types';
-import { formatDate, wordCount, firstSentence } from './format';
+import { formatDate, wordCount, firstSentence, stripHtml } from './format';
 
 /**
  * Build the Finder file-system tree from collection data.
@@ -7,12 +7,18 @@ import { formatDate, wordCount, firstSentence } from './format';
  * Child order: README.txt, projects, writing, art, life.
  */
 export function buildTree(input: TreeInput): FSNode {
+  const readmeMeta: [string, string][] = [
+    ['Kind', 'Plain Text'],
+    ['Created', formatDate(input.readme.created)],
+  ];
   const readmeNode: FSNode = {
     name: 'README.txt',
     path: '/README.txt',
     kind: 'Plain Text',
     icon: 'doc',
     created: input.readme.created,
+    meta: readmeMeta,
+    blurb: stripHtml(input.readme.text),
     open: {
       app: 'doc',
       props: {

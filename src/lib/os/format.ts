@@ -22,6 +22,20 @@ export function wordCount(text: string): number {
 }
 
 /**
+ * Strip HTML tags from a string, decode common HTML entities,
+ * and collapse all whitespace to single spaces (trimmed).
+ */
+export function stripHtml(html: string): string {
+  return html
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/**
  * Return the first sentence from text (ending at . ? !).
  * Truncates to 140 characters with ellipsis if over limit.
  */
