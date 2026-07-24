@@ -198,13 +198,20 @@ describe('buildTree', () => {
     expect(meta[3][1]).toBe('Oil on canvas');
   });
 
-  it('art node has previewImage and correct open', () => {
+  it('art node has previewImage and opens the Photos app in the art album', () => {
     const painting = findNode(root, '/art/painting-001')!;
     expect(painting.previewImage).toBe('/images/painting-001.jpg');
-    expect(painting.open?.app).toBe('gallery');
-    const props = painting.open?.props as { items: unknown[]; index: number };
+    expect(painting.open?.app).toBe('photos');
+    const props = painting.open?.props as { album: string; index: number };
+    expect(props.album).toBe('art');
     expect(props.index).toBe(0);
-    expect(Array.isArray(props.items)).toBe(true);
+  });
+
+  it('art folder opens the Photos app carrying the album', () => {
+    const art = root.children!.find((c) => c.name === 'art')!;
+    expect(art.open?.app).toBe('photos');
+    const props = art.open?.props as { album: string; items: unknown[] };
+    expect(props.album).toBe('art');
     expect(props.items.length).toBe(1);
   });
 
@@ -212,6 +219,26 @@ describe('buildTree', () => {
     const artFolder = root.children!.find((c) => c.name === 'art')!;
     const painting = artFolder.children!.find((c) => c.name === 'painting-001.png')!;
     expect(painting).toBeDefined();
+  });
+
+  it('life folder opens the Photos app carrying the album', () => {
+    const life = root.children!.find((c) => c.name === 'life')!;
+    expect(life.kind).toBe('Folder');
+    expect(life.open?.app).toBe('photos');
+    const props = life.open?.props as { album: string; items: unknown[] };
+    expect(props.album).toBe('life');
+    expect(props.items.length).toBe(1);
+  });
+
+  it('life photo node opens the Photos app at its own index', () => {
+    const photo = findNode(root, '/life/photo-001')!;
+    expect(photo).not.toBeNull();
+    expect(photo.kind).toBe('PNG image');
+    expect(photo.previewImage).toBe('/images/photo-001.jpg');
+    expect(photo.open?.app).toBe('photos');
+    const props = photo.open?.props as { album: string; index: number };
+    expect(props.album).toBe('life');
+    expect(props.index).toBe(0);
   });
 
   it('findNode returns null for missing path', () => {

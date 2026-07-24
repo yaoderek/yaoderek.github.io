@@ -1,4 +1,4 @@
-import type { FSNode, TreeInput } from './types';
+import type { FSNode, PhotoItem, TreeInput } from './types';
 import { formatDate, wordCount, firstSentence, stripHtml } from './format';
 
 /**
@@ -28,27 +28,6 @@ export function buildTree(input: TreeInput): FSNode {
       },
     },
   };
-
-  // Build gallery items for art and life pieces
-  const artItems = input.art.map((piece) => ({
-    id: piece.id,
-    title: piece.title,
-    imageUrl: piece.imageUrl,
-    created: piece.created,
-    medium: piece.medium,
-    width: piece.width,
-    height: piece.height,
-  }));
-
-  const lifeItems = input.life.map((piece) => ({
-    id: piece.id,
-    title: piece.title,
-    imageUrl: piece.imageUrl,
-    created: piece.created,
-    medium: piece.medium,
-    width: piece.width,
-    height: piece.height,
-  }));
 
   const projectsFolder: FSNode = {
     name: 'projects',
@@ -118,74 +97,54 @@ export function buildTree(input: TreeInput): FSNode {
     }),
   };
 
-  const artFolder: FSNode = {
-    name: 'art',
-    path: '/art',
-    kind: 'Folder',
-    icon: 'folder',
-    children: input.art.map((piece, index) => {
-      const meta: [string, string][] = [
-        ['Kind', 'PNG image'],
-        ['Created', formatDate(piece.created)],
-        ['Dimensions', `${piece.width} × ${piece.height}`],
-        ['Medium', piece.medium],
-      ];
-      return {
-        name: `${piece.id}.png`,
-        path: `/art/${piece.id}`,
-        kind: 'PNG image',
-        icon: 'image',
-        created: piece.created,
-        meta,
-        previewImage: piece.imageUrl,
-        open: {
-          app: 'gallery',
-          props: {
-            items: artItems,
-            index,
-          },
-        },
-      } satisfies FSNode;
-    }),
-  };
-
-  const lifeFolder: FSNode = {
-    name: 'life',
-    path: '/life',
-    kind: 'Folder',
-    icon: 'folder',
-    children: input.life.map((piece, index) => {
-      const meta: [string, string][] = [
-        ['Kind', 'PNG image'],
-        ['Created', formatDate(piece.created)],
-        ['Dimensions', `${piece.width} × ${piece.height}`],
-        ['Medium', piece.medium],
-      ];
-      return {
-        name: `${piece.id}.png`,
-        path: `/life/${piece.id}`,
-        kind: 'PNG image',
-        icon: 'image',
-        created: piece.created,
-        meta,
-        previewImage: piece.imageUrl,
-        open: {
-          app: 'gallery',
-          props: {
-            items: lifeItems,
-            index,
-          },
-        },
-      } satisfies FSNode;
-    }),
-  };
-
   return {
     name: "derek's mac",
     path: '/',
     kind: 'Folder',
     icon: 'folder',
-    children: [readmeNode, projectsFolder, writingFolder, artFolder, lifeFolder],
+    children: [
+      readmeNode,
+      projectsFolder,
+      writingFolder,
+      buildAlbumFolder('art', input.art),
+      buildAlbumFolder('life', input.life),
+    ],
+  };
+}
+
+/**
+ * A picture folder. Art and life are albums in the Photos app, not plain
+ * directories: opening the folder or any picture inside it launches Photos.
+ * The folder node carries the album's items so the app can read them once,
+ * which keeps each picture node down to its position in the album.
+ *
+ * The folder name doubles as the album id (see lib/os/photos.ts).
+ */
+function buildAlbumFolder(album: string, pieces: PhotoItem[]): FSNode {
+  return {
+    name: album,
+    path: `/${album}`,
+    kind: 'Folder',
+    icon: 'folder',
+    open: { app: 'photos', props: { album, items: pieces } },
+    children: pieces.map((piece, index) => {
+      const meta: [string, string][] = [
+        ['Kind', 'PNG image'],
+        ['Created', formatDate(piece.created)],
+        ['Dimensions', `${piece.width} × ${piece.height}`],
+        ['Medium', piece.medium],
+      ];
+      return {
+        name: `${piece.id}.png`,
+        path: `/${album}/${piece.id}`,
+        kind: 'PNG image',
+        icon: 'image',
+        created: piece.created,
+        meta,
+        previewImage: piece.imageUrl,
+        open: { app: 'photos', props: { album, index } },
+      } satisfies FSNode;
+    }),
   };
 }
 

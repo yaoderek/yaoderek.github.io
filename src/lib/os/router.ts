@@ -9,15 +9,15 @@
 const SECTIONS = ['projects', 'writing', 'art', 'life'] as const;
 
 /** Sections that support deep-linked item URLs (/<section>/<id>). */
-const ITEM_SECTIONS = new Set(['projects', 'writing', 'art']);
+const ITEM_SECTIONS = new Set(['projects', 'writing', 'art', 'life']);
 
 /**
  * The URL path that represents a given top window.
  *
  * - `null`, a window with no path, the Finder, internal windows
  *   (Trash/About), and root-level docs (README) all map to `/`.
- * - Project/doc/gallery windows whose path is a public section item map to
- *   that item path directly.
+ * - Windows whose path is a public section item (e.g. a project) map to that
+ *   item path directly.
  *
  * The Finder deliberately maps to `/` regardless of its folder selection:
  * only *opened* item windows change the URL, not folder navigation.

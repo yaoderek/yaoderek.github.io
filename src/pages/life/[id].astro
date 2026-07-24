@@ -1,0 +1,39 @@
+---
+import { getCollection } from 'astro:content';
+import { getImage, Image } from 'astro:assets';
+import OsPage from '../../layouts/OsPage.astro';
+import { formatDate } from '../../lib/os/format';
+
+export async function getStaticPaths() {
+  const life = await getCollection('life');
+  return life.map((entry) => ({
+    params: { id: entry.data.id },
+    props: { entry },
+  }));
+}
+
+const { entry } = Astro.props;
+const { data } = entry;
+
+const optimized = await getImage({ src: data.image, width: 1200, format: 'webp' });
+const ogImage = optimized.src;
+const dateIso = data.created.toISOString().slice(0, 10);
+const base = import.meta.env.BASE_URL.replace(/\/+$/, '');
+---
+
+<OsPage
+  initialPath={`/life/${data.id}`}
+  title={`${data.title} — Derek Yao`}
+  description={`${data.title} — a photo from Derek Yao's life.`}
+  ogImage={ogImage}
+>
+  <article>
+    <p><a href={`${base}/life`}>← life</a></p>
+    <h1>{data.title}</h1>
+    <Image src={data.image} alt={data.title} width={1200} />
+    <dl>
+      <dt>Taken</dt>
+      <dd><time datetime={dateIso}>{formatDate(dateIso)}</time></dd>
+    </dl>
+  </article>
+</OsPage>

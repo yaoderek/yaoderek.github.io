@@ -2,6 +2,7 @@
   import type { FSNode, AppId } from '../../lib/os/types';
   import type { Win } from '../../lib/os/windows';
   import { findNode } from '../../lib/os/fs';
+  import { photoAlbums, photoAt, photoWindowSize } from '../../lib/os/photos';
   import {
     pathForWin,
     urlToOpenPath,
@@ -30,7 +31,7 @@
   import AboutWindow from './apps/AboutWindow.svelte';
   import ProjectWindow from './apps/ProjectWindow.svelte';
   import DocWindow from './apps/DocWindow.svelte';
-  import GalleryWindow from './apps/GalleryWindow.svelte';
+  import PhotosWindow from './apps/PhotosWindow.svelte';
   import TrashWindow from './apps/TrashWindow.svelte';
 
   type Props = {
@@ -55,11 +56,24 @@
     dockIcons = {},
   }: Props = $props();
 
+  /**
+   * Appearance: a visitor's own choice sticks, otherwise we follow whatever the
+   * system is set to, the way a Mac does.
+   */
+  function initialDarkMode(): boolean {
+    const saved =
+      typeof localStorage !== 'undefined'
+        ? localStorage.getItem('derekos-theme')
+        : null;
+    if (saved === 'dark') return true;
+    if (saved === 'light') return false;
+    return typeof window !== 'undefined' && typeof window.matchMedia === 'function'
+      ? window.matchMedia('(prefers-color-scheme: dark)').matches
+      : false;
+  }
+
   // Dark mode — persisted per visitor, toggled from the menu bar.
-  let darkMode = $state(
-    typeof localStorage !== 'undefined' &&
-      localStorage.getItem('derekos-theme') === 'dark'
-  );
+  let darkMode = $state(initialDarkMode());
 
   function toggleDarkMode() {
     darkMode = !darkMode;
@@ -96,7 +110,7 @@
   let finderNavigateTo = $state<string | null>(null);
 
   // Live Finder selection, reported via onselect. Drives the URL when no
-  // gallery/other public window is on top (docs/projects read inline).
+  // window with a public path is on top (docs/projects read inline).
   let finderSelection = $state<string | null>('/README.txt');
 
   // Mobile breakpoint detection — reactive via matchMedia change listener.
@@ -117,19 +131,31 @@
       : false
   );
 
-  // Per-app default window sizes.
+  // Per-app default window sizes. A Photos window opened on a picture is sized
+  // to that picture instead (see photoWindowSize).
   const SIZES: Record<AppId, { w: number; h: number }> = {
     project: { w: 980, h: 620 },
     doc: { w: 640, h: 560 },
-    gallery: { w: 840, h: 600 },
+    photos: { w: 780, h: 680 },
     finder: { w: 960, h: 560 },
     about: { w: 420, h: 260 },
     trash: { w: 480, h: 320 },
   };
 
+  // Breathing room between a photo window and the edge of the screen.
+  const PHOTOS_MARGIN = 12;
+
+  /** The picture the desktop greets a visitor with, from the life album. */
+  const GREETING_PHOTO = 'pier-at-night';
+
   function viewport() {
     return { vw: window.innerWidth, vh: window.innerHeight };
   }
+
+  // Art and life as Photos albums, read off their folder nodes.
+  const albums = $derived(photoAlbums(tree));
+
+  const lifeAlbum = $derived(albums.find((a) => a.id === 'life') ?? null);
 
   /**
    * Open (or focus) the appropriate window for a filesystem path.
@@ -144,6 +170,14 @@
     // file rather than opening a window.
     if (node.open && (node.open.app === 'doc' || node.open.app === 'project')) {
       openInFinder(node.path);
+      return;
+    }
+
+    // The art and life folders and every picture in them belong to the Photos
+    // app, which keeps a single window and re-targets it instead of stacking.
+    if (node.open && node.open.app === 'photos') {
+      const props = node.open.props as { album: string; index?: number };
+      openPhotos(props.album, props.index ?? null);
       return;
     }
 
@@ -176,7 +210,7 @@
    * When the Finder already exists, `navigate` drives its selection via the
    * one-shot signal (false = just focus, e.g. clicking the Finder dock icon).
    */
-  function openInFinder(selection: string, navigate = true) {
+  function openInFinder(selection: string, navigate = true, x?: number) {
     const { w, h } = SIZES.finder;
     const finderExists = wins.some((w) => w.app === 'finder');
     const vp = viewport();
@@ -190,12 +224,93 @@
         w,
         h,
         // Spawn centered (slight upward bias, like macOS), not cascaded.
-        x: Math.round((vp.vw - w) / 2),
+        x: x ?? Math.round((vp.vw - w) / 2),
         y: Math.round(Math.max(24, (vp.vh - h) * 0.42)),
       },
       vp
     );
     if (finderExists && navigate) finderNavigateTo = selection;
+  }
+
+  /**
+   * Open (or focus) the single Photos window.
+   *
+   * `album` + `index` target one picture, and a window opened on a picture is
+   * sized to it and parked against the right edge. A null album opens a new
+   * window on the album list and leaves an existing one where it is.
+   */
+  function openPhotos(album: string | null, index: number | null) {
+    if (albums.length === 0) return;
+
+    const existing = wins.find((w) => w.app === 'photos');
+    if (existing) {
+      wins = focus(
+        wins.map((w) =>
+          w.id === existing.id
+            ? { ...w, minimized: false, props: { ...w.props, album, index } }
+            : w
+        ),
+        existing.id
+      );
+      return;
+    }
+
+    const vp = viewport();
+    const photo = photoAt(albums, album, index);
+    const { w, h } = photo ? photoWindowSize(photo, vp) : SIZES.photos;
+    wins = open(
+      wins,
+      {
+        app: 'photos',
+        title: 'Photos',
+        // Internal: one window covers both albums, so it owns no URL.
+        path: '/__photos__',
+        props: { albums, album, index },
+        w,
+        h,
+        x: photo
+          ? vp.vw - w - PHOTOS_MARGIN
+          : Math.round((vp.vw - w) / 2 + 150),
+        y: Math.round(Math.max(24, (vp.vh - h) / 2)),
+      },
+      vp
+    );
+  }
+
+  /**
+   * The opening arrangement on a big screen: the README in the Finder, with
+   * Photos sized to the greeting photo tucked in beside it on the right.
+   */
+  function openGreeting() {
+    const photos = lifeAlbum?.items ?? [];
+    if (photos.length === 0) {
+      openPath('/');
+      return;
+    }
+    const found = photos.findIndex((photo) => photo.id === GREETING_PHOTO);
+    const index = found >= 0 ? found : photos.length - 1;
+    const vp = viewport();
+    const { w } = photoWindowSize(photos[index], vp);
+    openInFinder(
+      '/README.txt',
+      false,
+      vp.vw - w - PHOTOS_MARGIN - SIZES.finder.w
+    );
+    openPhotos('life', index);
+  }
+
+  /**
+   * Mobile has no windows, so the Photos dock icon drills the Files view into
+   * the life folder on a random photo instead.
+   */
+  function openRandomPhotoOnMobile() {
+    const photos = lifeAlbum?.items ?? [];
+    const path =
+      photos.length === 0
+        ? '/life'
+        : `/life/${photos[Math.floor(Math.random() * photos.length)].id}`;
+    mobileNavigateTo = path;
+    onMobileNavigate(path);
   }
 
   /** Open the About window (no filesystem node needed). */
@@ -262,9 +377,15 @@
 
     // On desktop: open Finder at root on mount, then any deep-linked path.
     if (!isMobile) {
-      openPath('/');
-      if (effectiveInitialPath) openPath(effectiveInitialPath);
-      if (notFound) openNotFound();
+      if (notFound) {
+        openPath('/');
+        openNotFound();
+      } else if (effectiveInitialPath) {
+        openPath('/');
+        openPath(effectiveInitialPath);
+      } else {
+        openGreeting();
+      }
     }
 
     // Back/forward navigation drives the window manager. The URL-sync $effect's
@@ -296,8 +417,8 @@
   // Skipped on mobile — MobileFiles drives URL via onnavigate callback instead.
   $effect(() => {
     if (isMobile) return;
-    // A public-path window on top (e.g. an art gallery) wins; otherwise the
-    // URL follows what the Finder selection is showing inline.
+    // A window with a public path on top wins; otherwise the URL follows what
+    // the Finder selection is showing inline.
     let urlPath = pathForWin(topWindow(wins));
     if (urlPath === '/') urlPath = fsPathToUrl(finderSelection ?? '/');
     const desired = withBase(urlPath, BASE);
@@ -338,7 +459,7 @@
   // — MenuBar already handles & stopPropagation's its own Esc; this only fires
   // when no menu dropdown is open).
   // Pure-CSS animations honor prefers-reduced-motion; JS-driven ones (dock
-  // magnification, gallery slides, scroll behavior) are gated on reducedMotion.
+  // magnification, filmstrip scrolling) are gated on reducedMotion.
   // The View-menu toggle is authoritative for JS behavior; CSS media query
   // handles pure-CSS animations independently.
   function onDesktopKeydown(e: KeyboardEvent) {
@@ -377,12 +498,16 @@
     }
   }
 
+  // Apps with a window open right now — drives the dock's running indicator.
+  const openApps = $derived(new Set(wins.map((w) => w.app)));
+
   // Dock items ($derived so showResume is tracked reactively)
   const dockItems = $derived([
     {
       id: 'finder',
       label: 'Finder',
       iconUrl: dockIcons.finder,
+      running: openApps.has('finder'),
       action: () => openPath('/'),
     },
     {
@@ -395,7 +520,9 @@
       id: 'photos',
       label: 'Photos',
       iconUrl: dockIcons.photos,
-      action: () => openPath('/art'),
+      running: openApps.has('photos'),
+      action: () =>
+        isMobile ? openRandomPhotoOnMobile() : openPhotos(null, null),
     },
     ...(showResume
       ? [{
@@ -424,6 +551,7 @@
       id: 'trash',
       label: 'Trash',
       iconUrl: dockIcons.trash,
+      running: openApps.has('trash'),
       action: () => {
         wins = open(
           wins,
@@ -530,10 +658,11 @@
             <ProjectWindow {...win.props as ComponentProps<typeof ProjectWindow>} />
           {:else if win.app === 'doc'}
             <DocWindow {...win.props as ComponentProps<typeof DocWindow>} />
-          {:else if win.app === 'gallery'}
-            <GalleryWindow
-              {...win.props as ComponentProps<typeof GalleryWindow>}
+          {:else if win.app === 'photos'}
+            <PhotosWindow
+              {...win.props as ComponentProps<typeof PhotosWindow>}
               active={win.id === topId}
+              {reducedMotion}
             />
           {:else if win.app === 'trash'}
             <TrashWindow />

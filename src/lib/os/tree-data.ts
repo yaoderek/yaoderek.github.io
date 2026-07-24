@@ -41,8 +41,9 @@ async function toUrl(src: ImageMetadata): Promise<string> {
  *
  * Must run in an Astro frontmatter context (uses astro:content + astro:assets).
  * `rendered` maps "projects/<slug>" and "writing/<slug>" to rendered HTML strings.
- * Projects and writing are sorted by `created` DESCENDING (newest first);
- * art and life keep their YAML order.
+ * Projects and writing are sorted by `created` DESCENDING (newest first); life
+ * is sorted ASCENDING so the Photos library reads oldest to newest; art keeps
+ * whatever order the collection loader hands back.
  */
 export async function getTreeInput(
   rendered: Record<string, string>
@@ -113,9 +114,13 @@ export async function getTreeInput(
       })
     );
 
+  const lifeSorted = [...lifeRaw].sort(
+    (a, b) => a.data.created.getTime() - b.data.created.getTime()
+  );
+
   const [art, life] = await Promise.all([
     mapPieces(artRaw),
-    mapPieces(lifeRaw),
+    mapPieces(lifeSorted),
   ]);
 
   return {

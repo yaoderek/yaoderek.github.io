@@ -60,7 +60,7 @@
       <p class="blurb">{node.blurb}</p>
     {/if}
 
-    {#if node.open?.app === 'gallery'}
+    {#if node.open?.app === 'photos'}
       <button class="open" onclick={() => onopen(node.path)}>Open</button>
     {/if}
   </div>

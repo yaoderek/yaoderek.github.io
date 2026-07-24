@@ -2,10 +2,11 @@
   import { onMount } from 'svelte';
   import type { FSNode } from '../../lib/os/types';
   import { findNode } from '../../lib/os/fs';
+  import { photoAlbums } from '../../lib/os/photos';
   import Icon from './Icon.svelte';
   import ProjectWindow from './apps/ProjectWindow.svelte';
   import DocWindow from './apps/DocWindow.svelte';
-  import GalleryWindow from './apps/GalleryWindow.svelte';
+  import PhotosWindow from './apps/PhotosWindow.svelte';
   import type { ComponentProps } from 'svelte';
 
   type Props = {
@@ -27,6 +28,10 @@
     onnavigated = null,
     reducedMotion: propReducedMotion = false,
   }: Props = $props();
+
+  // Picture nodes carry only an album id and an index; the albums themselves
+  // come from the tree, same as on the desktop.
+  const albums = $derived(photoAlbums(tree));
 
   // Stack of FS paths; top of stack = current view.
   let stack = $state<string[]>(['/']);
@@ -227,10 +232,13 @@
               <ProjectWindow {...item.open.props as ComponentProps<typeof ProjectWindow>} />
             {:else if item.open.app === 'doc'}
               <DocWindow {...item.open.props as ComponentProps<typeof DocWindow>} />
-            {:else if item.open.app === 'gallery'}
-              <GalleryWindow
-                {...item.open.props as ComponentProps<typeof GalleryWindow>}
+            {:else if item.open.app === 'photos'}
+              <PhotosWindow
+                {...item.open.props as ComponentProps<typeof PhotosWindow>}
+                {albums}
                 active={true}
+                {reducedMotion}
+                compact={true}
               />
             {/if}
           </div>
@@ -245,7 +253,7 @@
                 aria-label={node.name}
               >
                 <span class="file-icon">
-                  <Icon kind={node.icon as 'folder' | 'doc' | 'app' | 'image'} size={28} thumb={(node.open?.props?.thumbUrl as string | undefined) ?? null} />
+                  <Icon kind={node.icon as 'folder' | 'doc' | 'app' | 'image'} size={28} thumb={node.previewImage ?? (node.open?.props?.thumbUrl as string | undefined) ?? null} />
                 </span>
                 <span class="file-name">{node.name}</span>
                 <span class="file-chevron" aria-hidden="true">›</span>

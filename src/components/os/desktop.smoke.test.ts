@@ -91,6 +91,70 @@ const fixtureTree: FSNode = {
   ],
 };
 
+// Two albums: art and life. The folders and the pictures inside them all open
+// the Photos app. The last life photo stands in for the greeting photo, which
+// the desktop falls back to when 'pier-at-night' is missing.
+const artItems = [
+  {
+    id: 'poseidon',
+    title: 'Poseidon',
+    imageUrl: '/images/poseidon.webp',
+    created: '2025-01-01',
+    medium: 'graphite on paper',
+    width: 1200,
+    height: 1600,
+  },
+];
+
+const photoItems = [
+  {
+    id: 'lake-union',
+    title: 'Lake Union pilings',
+    imageUrl: '/images/lake-union.webp',
+    created: '2025-07-19',
+    medium: 'photo',
+    width: 1200,
+    height: 1600,
+  },
+  {
+    id: 'taipei-metro',
+    title: 'Taipei metro',
+    imageUrl: '/images/taipei-metro.webp',
+    created: '2025-08-09',
+    medium: 'photo',
+    width: 1600,
+    height: 1200,
+  },
+];
+
+function albumFolder(album: string, items: typeof photoItems): FSNode {
+  return {
+    name: album,
+    path: `/${album}`,
+    kind: 'Folder',
+    icon: 'folder',
+    open: { app: 'photos', props: { album, items } },
+    children: items.map((photo, index) => ({
+      name: `${photo.id}.png`,
+      path: `/${album}/${photo.id}`,
+      kind: 'PNG image',
+      icon: 'image',
+      created: photo.created,
+      previewImage: photo.imageUrl,
+      open: { app: 'photos', props: { album, index } },
+    })),
+  };
+}
+
+const lifeTree: FSNode = {
+  ...fixtureTree,
+  children: [
+    ...fixtureTree.children!,
+    albumFolder('art', artItems),
+    albumFolder('life', photoItems),
+  ],
+};
+
 // Clean up location.hash after each test so tests don't bleed into each other.
 afterEach(() => {
   if (location.hash) history.replaceState({}, '', location.pathname);
@@ -209,6 +273,140 @@ test('a11y: dialog role + aria-label present; Esc closes top window', async () =
 
   unmount(app);
   target.remove();
+});
+
+test('startup opens Photos on the greeting photo, with a running dot in the dock', async () => {
+  const target = document.createElement('div');
+  document.body.appendChild(target);
+  const app = mount(Desktop, {
+    target,
+    props: { tree: lifeTree, initialPath: null, showResume: false },
+  });
+  await new Promise((r) => setTimeout(r, 50));
+
+  const photos = target.querySelector('[role="dialog"][aria-label="Photos"]');
+  expect(photos).not.toBeNull();
+  // One photo from the life album is showing, not a grid: the greeting photo,
+  // which falls back to the last one in this fixture.
+  expect(photos!.textContent).toContain('2 of 2');
+  expect(photos!.textContent).toContain('Taipei metro');
+  // The Finder is still open beside it.
+  expect(target.querySelector('[role="dialog"][aria-label="derek\'s mac"]')).not.toBeNull();
+  // Dock marks open apps the way macOS does.
+  expect(target.querySelector('.running-dot')).not.toBeNull();
+
+  unmount(app);
+  target.remove();
+});
+
+test('a Photos window opened on a photo is sized to it, not to the app default', async () => {
+  const target = document.createElement('div');
+  document.body.appendChild(target);
+  const app = mount(Desktop, {
+    target,
+    props: { tree: lifeTree, initialPath: null, showResume: false },
+  });
+  await new Promise((r) => setTimeout(r, 50));
+
+  const photos = target.querySelector<HTMLElement>('[role="dialog"][aria-label="Photos"]');
+  expect(photos).not.toBeNull();
+  // The greeting photo is 1600×1200, so the window is wider than it is tall —
+  // the app's default size (780×680) would be the other way round.
+  const width = parseFloat(photos!.style.width);
+  const height = parseFloat(photos!.style.height);
+  expect(width).toBeGreaterThan(height);
+  expect(width).toBeLessThan(window.innerWidth);
+
+  unmount(app);
+  target.remove();
+});
+
+test('a deep-linked drawing opens in Photos, in the art album', async () => {
+  const target = document.createElement('div');
+  document.body.appendChild(target);
+  const app = mount(Desktop, {
+    target,
+    props: { tree: lifeTree, initialPath: '/art/poseidon', showResume: false },
+  });
+  await new Promise((r) => setTimeout(r, 50));
+
+  const photos = target.querySelector('[role="dialog"][aria-label="Photos"]');
+  expect(photos).not.toBeNull();
+  expect(photos!.textContent).toContain('Poseidon');
+  // Back goes to the album it came from, and the art album has one piece.
+  expect(photos!.textContent).toContain('Art');
+  expect(photos!.textContent).toContain('1 of 1');
+
+  unmount(app);
+  target.remove();
+});
+
+test('Photos dock icon opens the Photos window on its albums', async () => {
+  const target = document.createElement('div');
+  document.body.appendChild(target);
+  // A deep link suppresses the startup Photos window, so the dock click is the
+  // only thing that can open it here.
+  const app = mount(Desktop, {
+    target,
+    props: { tree: lifeTree, initialPath: '/README.txt', showResume: false },
+  });
+  await new Promise((r) => setTimeout(r, 50));
+  expect(target.querySelector('[role="dialog"][aria-label="Photos"]')).toBeNull();
+
+  const dockPhotos = target.querySelector<HTMLButtonElement>('button[aria-label="Photos"]');
+  expect(dockPhotos).not.toBeNull();
+  dockPhotos!.click();
+  await new Promise((r) => setTimeout(r, 20));
+
+  const photos = target.querySelector('[role="dialog"][aria-label="Photos"]');
+  expect(photos).not.toBeNull();
+  // Opens on the album list — one album per picture folder — and the Finder
+  // stayed on the README it was showing.
+  expect(photos!.textContent).toContain('Albums');
+  expect(photos!.textContent).toContain('Art');
+  expect(photos!.textContent).toContain('Life');
+
+  unmount(app);
+  target.remove();
+});
+
+test('mobile: Photos dock icon drills into the life folder on a photo', async () => {
+  const target = document.createElement('div');
+  document.body.appendChild(target);
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (window as any).matchMedia = (query: string) => ({
+    matches: query.includes('max-width'),
+    addEventListener() {},
+    removeEventListener() {},
+  });
+
+  const app = mount(Desktop, {
+    target,
+    props: { tree: lifeTree, initialPath: null, showResume: false },
+  });
+  await new Promise((r) => setTimeout(r, 50));
+
+  const dockPhotos = target.querySelector<HTMLButtonElement>('button[aria-label="Photos"]');
+  expect(dockPhotos).not.toBeNull();
+  dockPhotos!.click();
+  await new Promise((r) => setTimeout(r, 30));
+
+  // No windows on mobile: the files view is showing one of the photos.
+  expect(target.querySelector('[role="dialog"]')).toBeNull();
+  const text = target.textContent ?? '';
+  expect(photoItems.some((photo) => text.includes(photo.title))).toBe(true);
+
+  unmount(app);
+  target.remove();
+
+  // Restore the matchMedia stub to the non-mobile default for later tests.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (window as any).matchMedia = () => ({
+    matches: false,
+    addEventListener() {},
+    removeEventListener() {},
+  });
 });
 
 // Regression: legacy hash deep-links (#projects/speakeasy) must work on mobile.

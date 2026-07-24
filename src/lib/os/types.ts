@@ -1,4 +1,21 @@
-export type AppId = 'finder' | 'project' | 'doc' | 'gallery' | 'about' | 'trash';
+export type AppId =
+  | 'finder'
+  | 'project'
+  | 'doc'
+  | 'photos'
+  | 'about'
+  | 'trash';
+
+/** A picture in the Photos app: a drawing from /art or a photo from /life. */
+export type PhotoItem = {
+  id: string;
+  title: string;
+  created: string;                       // ISO date
+  medium: string;
+  imageUrl: string;
+  width: number;
+  height: number;
+};
 
 export type FSNode = {
   name: string;
@@ -36,14 +53,6 @@ export type TreeInput = {
     bodyHtml: string;
     bodyText: string;
   }[];
-  art: {
-    id: string;
-    title: string;
-    created: string;
-    medium: string;
-    imageUrl: string;
-    width: number;
-    height: number;
-  }[];
-  life: TreeInput['art'];
+  art: PhotoItem[];
+  life: PhotoItem[];
 };

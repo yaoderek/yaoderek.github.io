@@ -35,8 +35,8 @@ describe('pathForWin', () => {
     expect(pathForWin({ app: 'doc', path: '/writing/rue' })).toBe('/writing/rue');
   });
 
-  it('returns the node path for a gallery (art) window', () => {
-    expect(pathForWin({ app: 'gallery', path: '/art/art-1' })).toBe('/art/art-1');
+  it('returns "/" for the Photos window (one window, both albums)', () => {
+    expect(pathForWin({ app: 'photos', path: '/__photos__' })).toBe('/');
   });
 
   it('returns "/" for a README doc window (root-level doc, no section)', () => {
@@ -97,8 +97,8 @@ describe('urlToOpenPath', () => {
     expect(urlToOpenPath('/blog/hello')).toBeNull();
   });
 
-  it('returns null for a life sub-path (no /life/<id> pages)', () => {
-    expect(urlToOpenPath('/life/anything')).toBeNull();
+  it('maps /life/<id> to the photo node path', () => {
+    expect(urlToOpenPath('/life/lake-union')).toBe('/life/lake-union');
   });
 
   it('returns null for too-deep paths', () => {

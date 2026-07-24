@@ -7,6 +7,8 @@
     id: string;
     label: string;
     iconUrl?: string;
+    // True when the app has a window open — draws the dot under the icon.
+    running?: boolean;
     action: () => void;
   };
 
@@ -113,7 +115,7 @@
     switch (app) {
       case 'finder': return appIcons.finder;
       case 'doc': return appIcons.notes;
-      case 'gallery': return appIcons.photos;
+      case 'photos': return appIcons.photos;
       default: return appIcons.notes;
     }
   }
@@ -152,7 +154,7 @@
           style:transform={`scale(${scale})`}
           onclick={item.action}
           title={item.label}
-          aria-label={item.label}
+          aria-label={item.running ? `${item.label} (open)` : item.label}
           bind:this={iconRefs[i]}
         >
           {#if item.iconUrl}
@@ -160,6 +162,9 @@
           {/if}
           <span class="tooltip">{item.label}</span>
         </button>
+        {#if item.running}
+          <span class="running-dot" aria-hidden="true"></span>
+        {/if}
       </div>
     {/each}
 
@@ -204,7 +209,7 @@
             style:transform={`scale(${scale})`}
             onclick={item.action}
             title={item.label}
-            aria-label={item.label}
+            aria-label={item.running ? `${item.label} (open)` : item.label}
             bind:this={iconRefs[idx]}
           >
             {#if item.iconUrl}
@@ -212,6 +217,9 @@
             {/if}
             <span class="tooltip">{item.label}</span>
           </button>
+          {#if item.running}
+            <span class="running-dot" aria-hidden="true"></span>
+          {/if}
         </div>
       {/each}
     {/if}
@@ -274,7 +282,8 @@
     display: flex;
     align-items: flex-end;
     gap: 4px;
-    padding: 6px 10px 4px;
+    /* Bottom padding leaves room for the running-app dots. */
+    padding: 6px 10px 8px;
     background: var(--dock-bg);
     backdrop-filter: blur(24px);
     -webkit-backdrop-filter: blur(24px);
@@ -335,6 +344,19 @@
     height: 44px;
     display: block;
     -webkit-user-drag: none;
+  }
+
+  /* Running-app indicator: the dot macOS puts under an open app. */
+  .running-dot {
+    position: absolute;
+    bottom: -5px;
+    left: 50%;
+    translate: -50% 0;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--dock-dot);
+    pointer-events: none;
   }
 
   .minimized-win .win-thumb {
