@@ -16,3 +16,5 @@ images:
 ---
 
 Forklift is an ai-powered platform that helps users find repositories, understand codebases, discover issues, and start contributing.
+
+won best first-time hack and $1200 at Roo Code Hackathon. my first hackathon, and first serious foray into side-projecting. shoutout to my teammates yifan, ben, and david for putting up with my bs. 

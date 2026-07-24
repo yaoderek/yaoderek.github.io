@@ -14,6 +14,8 @@ images:
   - ../../assets/projects/orbit-2.png
 ---
 
+built for the CascadiaJS hackathon. Shoutout Berkan, Yifan and Ben. 
+
 Orbit is a hyperlocal networking app that helps users discover and connect with nearby professionals. It combines real-time location, AI-powered semantic search, and an intuitive interface to make networking at conferences, hackathons, and other events more seamless and engaging.
 
 Networking at large events is kinda hard. You meet interesting people in passing, but exchanging contact information feels awkward. Even when you do connect, it's easy to forget who someone was or what they were working on.

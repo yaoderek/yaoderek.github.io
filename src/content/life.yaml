@@ -1,1 +1,47 @@
-[]
+# The Photos app orders the library by `created`, oldest first.
+# Dates are placeholders where the real capture date wasn't known.
+- id: pacific-science-center
+  title: Pacific Science Center arches
+  created: 2025-02-14
+  medium: photo
+  image: ../assets/life/pacific-science-center.png
+- id: laundry-night
+  title: Laundry night
+  created: 2025-03-08
+  medium: photo
+  image: ../assets/life/laundry-night.png
+- id: fit-check
+  title: Fit check
+  created: 2025-04-12
+  medium: photo
+  image: ../assets/life/fit-check.png
+- id: fit-check-back
+  title: Fit check, back
+  created: 2025-04-12
+  medium: photo
+  image: ../assets/life/fit-check-back.png
+- id: sunglasses-indoors
+  title: Sunglasses indoors
+  created: 2025-05-24
+  medium: photo
+  image: ../assets/life/sunglasses-indoors.png
+- id: festival
+  title: Festival
+  created: 2025-06-21
+  medium: photo
+  image: ../assets/life/festival.png
+- id: lake-union
+  title: Lake Union pilings
+  created: 2025-07-19
+  medium: photo
+  image: ../assets/life/lake-union.png
+- id: taipei-metro
+  title: Taipei metro
+  created: 2025-08-09
+  medium: photo
+  image: ../assets/life/taipei-metro.png
+- id: pier-at-night
+  title: Pier at night
+  created: 2025-09-27
+  medium: photo
+  image: ../assets/life/pier-at-night.png

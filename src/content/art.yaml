@@ -8,11 +8,6 @@
   created: 2025-01-01
   medium: digital
   image: ../assets/art/art-2.png
-- id: art-3
-  title: Untitled 3
-  created: 2025-01-01
-  medium: digital
-  image: ../assets/art/art-3.png
 - id: art-04
   title: Untitled 4
   created: 2025-01-01
@@ -93,28 +88,33 @@
   created: 2025-01-01
   medium: digital
   image: ../assets/art/art-19.png
-- id: art-20
-  title: Untitled 20
+- id: study-1
+  title: Head study
   created: 2025-01-01
-  medium: digital
-  image: ../assets/art/art-20.png
-- id: art-21
-  title: Untitled 21
+  medium: graphite on paper
+  image: ../assets/art/study-1.png
+- id: ben
+  title: Ben
   created: 2025-01-01
-  medium: digital
-  image: ../assets/art/art-21.png
-- id: art-22
-  title: Untitled 22
+  medium: graphite on paper
+  image: ../assets/art/ben.png
+- id: lawrence
+  title: Lawrence
   created: 2025-01-01
-  medium: digital
-  image: ../assets/art/art-22.png
-- id: art-23
-  title: Untitled 23
+  medium: graphite on paper
+  image: ../assets/art/lawrence.png
+- id: self-portrait
+  title: Self-portrait
   created: 2025-01-01
-  medium: digital
-  image: ../assets/art/art-23.png
-- id: art-24
-  title: Untitled 24
+  medium: graphite on paper
+  image: ../assets/art/self-portrait.png
+- id: poseidon
+  title: Poseidon
   created: 2025-01-01
-  medium: digital
-  image: ../assets/art/art-24.png
+  medium: charcoal on paper
+  image: ../assets/art/poseidon.png
+- id: first-oil-painting
+  title: First oil painting
+  created: 2025-01-01
+  medium: oil on canvas
+  image: ../assets/art/first-oil-painting.png

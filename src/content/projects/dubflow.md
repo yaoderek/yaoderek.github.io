@@ -18,6 +18,8 @@ images:
   - ../../assets/projects/dubflow-3.png
 ---
 
+Built for DubHacks. Shoutout Berkan, Yifan and Ben
+
 DubFlow is a smart focus tracker that keeps you accountable in the cutest way possible. It's a desktop app/overlay that uses both webcam video and window monitoring to recognize when you're focused or distracted. Your on-screen companion, Dubs (the UW mascot), reacts in real time to your behavior. DubFlow has a main dashboard that allows users to start new focus sessions, view focus analytics, control Dubs, and view past session history. Once a focus session is started, the Dubs overlay appears and begins monitoring your focus in real-time.
 
 There are two ways to trigger a distracted state: looking away from the screen or switching to a distracting app/website. Dubs will then respond with a context-aware message like: "Only 20 minutes remain for those integrals, so put that phone away before I eat it." The session is visualized on the progress bar, with yellow segments indicating distracted periods and purple segments indicating focused periods.
