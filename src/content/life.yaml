@@ -1,5 +1,6 @@
 # The Photos app orders the library by `created`, oldest first.
-# Dates are placeholders where the real capture date wasn't known.
+# Dates are placeholders where the real capture date wasn't known; the 2026
+# entries come from the files' own EXIF.
 - id: pacific-science-center
   title: Pacific Science Center arches
   created: 2025-02-14
@@ -45,3 +46,23 @@
   created: 2025-09-27
   medium: photo
   image: ../assets/life/pier-at-night.png
+- id: cascade-summit
+  title: Cascade summit
+  created: 2026-05-24
+  medium: photo
+  image: ../assets/life/cascade-summit.jpeg
+- id: handstand
+  title: Handstand at night
+  created: 2026-05-29
+  medium: photo
+  image: ../assets/life/handstand.jpeg
+- id: half-dome-looking-out
+  title: Half Dome, looking out
+  created: 2026-07-26
+  medium: photo
+  image: ../assets/life/half-dome-looking-out.jpeg
+- id: half-dome
+  title: Half Dome
+  created: 2026-07-26
+  medium: photo
+  image: ../assets/life/half-dome.jpeg
