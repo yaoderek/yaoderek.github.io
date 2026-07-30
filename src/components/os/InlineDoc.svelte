@@ -64,6 +64,23 @@
     margin: 1.5em 0 0.5em;
   }
 
+  /* Lists read as lists, not as prose: tighter and less indented than the
+     browser default. */
+  .body :global(ul),
+  .body :global(ol) {
+    margin: 0 0 1.1em;
+    padding-left: 1.3em;
+  }
+
+  .body :global(li) {
+    margin: 0.1em 0;
+    line-height: 1.45;
+  }
+
+  .body :global(li::marker) {
+    color: var(--text-dim);
+  }
+
   .body :global(a) {
     color: var(--accent);
   }

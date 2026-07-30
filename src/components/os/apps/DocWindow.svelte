@@ -100,6 +100,22 @@
     line-height: 1.3;
   }
 
+  /* Lists read as lists, not as prose: tighter than the body's 1.65. */
+  .content :global(ul),
+  .content :global(ol) {
+    margin: 0.5em 0 1.2em;
+    padding-left: 1.2em;
+  }
+
+  .content :global(li) {
+    margin: 0.1em 0;
+    line-height: 1.5;
+  }
+
+  .content :global(li::marker) {
+    color: var(--text-dim);
+  }
+
   .content :global(a) {
     color: var(--accent);
     text-decoration: none;
