@@ -1,8 +1,8 @@
-- id: art-1
-  title: Untitled 1
+- id: vase-study
+  title: Vase study
   created: 2025-01-01
   medium: digital
-  image: ../assets/art/art-1.png
+  image: ../assets/art/vase-study.png
 - id: art-2
   title: Untitled 2
   created: 2025-01-01
@@ -63,31 +63,31 @@
   created: 2025-01-01
   medium: digital
   image: ../assets/art/art-14.png
-- id: art-15
-  title: Untitled 15
+- id: david-1
+  title: David
   created: 2025-01-01
   medium: digital
-  image: ../assets/art/art-15.png
-- id: art-16
-  title: Untitled 16
+  image: ../assets/art/david-1.png
+- id: cassandra
+  title: Cassandra
   created: 2025-01-01
   medium: digital
-  image: ../assets/art/art-16.png
-- id: art-17
-  title: Untitled 17
+  image: ../assets/art/cassandra.png
+- id: bounty
+  title: Bounty
   created: 2025-01-01
   medium: digital
-  image: ../assets/art/art-17.png
-- id: art-18
-  title: Untitled 18
+  image: ../assets/art/bounty.png
+- id: drive
+  title: Drive
   created: 2025-01-01
   medium: digital
-  image: ../assets/art/art-18.png
-- id: art-19
-  title: Untitled 19
+  image: ../assets/art/drive.png
+- id: paul-atreides
+  title: Paul Atreides
   created: 2025-01-01
   medium: digital
-  image: ../assets/art/art-19.png
+  image: ../assets/art/paul-atreides.png
 - id: study-1
   title: Head study
   created: 2025-01-01

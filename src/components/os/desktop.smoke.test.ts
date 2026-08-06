@@ -93,7 +93,7 @@ const fixtureTree: FSNode = {
 
 // Two albums: art and life. The folders and the pictures inside them all open
 // the Photos app. The last life photo stands in for the greeting photo, which
-// the desktop falls back to when 'pier-at-night' is missing.
+// the desktop falls back to when the real greeting photo isn't in the album.
 const artItems = [
   {
     id: 'poseidon',

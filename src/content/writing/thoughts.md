@@ -1,5 +1,5 @@
 ---
-title: Draft on something you read
+title: thoughts
 created: 2025-11-02
 ---
 

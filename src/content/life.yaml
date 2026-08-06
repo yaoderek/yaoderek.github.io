@@ -1,36 +1,31 @@
 # The Photos app orders the library by `created`, oldest first.
 # Dates are placeholders where the real capture date wasn't known; the 2026
 # entries come from the files' own EXIF.
-- id: pacific-science-center
+- id: pacsci
   title: Pacific Science Center arches
   created: 2025-02-14
   medium: photo
-  image: ../assets/life/pacific-science-center.png
-- id: laundry-night
-  title: Laundry night
+  image: ../assets/life/pacsci.png
+- id: messin-around
+  title: Messin around
   created: 2025-03-08
   medium: photo
-  image: ../assets/life/laundry-night.png
-- id: fit-check
-  title: Fit check
+  image: ../assets/life/messin-around.png
+- id: merch-front
+  title: Merch, front
   created: 2025-04-12
   medium: photo
-  image: ../assets/life/fit-check.png
-- id: fit-check-back
-  title: Fit check, back
+  image: ../assets/life/merch-front.png
+- id: merch-back
+  title: Merch, back
   created: 2025-04-12
   medium: photo
-  image: ../assets/life/fit-check-back.png
-- id: sunglasses-indoors
-  title: Sunglasses indoors
-  created: 2025-05-24
-  medium: photo
-  image: ../assets/life/sunglasses-indoors.png
-- id: festival
-  title: Festival
+  image: ../assets/life/merch-back.png
+- id: martin-garrix
+  title: Martin Garrix
   created: 2025-06-21
   medium: photo
-  image: ../assets/life/festival.png
+  image: ../assets/life/martin-garrix.png
 - id: lake-union
   title: Lake Union pilings
   created: 2025-07-19
@@ -41,28 +36,33 @@
   created: 2025-08-09
   medium: photo
   image: ../assets/life/taipei-metro.png
-- id: pier-at-night
-  title: Pier at night
-  created: 2025-09-27
-  medium: photo
-  image: ../assets/life/pier-at-night.png
-- id: cascade-summit
-  title: Cascade summit
+- id: granite-mountain
+  title: Granite Mountain
   created: 2026-05-24
   medium: photo
-  image: ../assets/life/cascade-summit.jpeg
+  image: ../assets/life/granite-mountain.jpeg
 - id: handstand
   title: Handstand at night
   created: 2026-05-29
   medium: photo
   image: ../assets/life/handstand.jpeg
-- id: half-dome-looking-out
-  title: Half Dome, looking out
+- id: eagle-peak-summit
+  title: Eagle Peak summit
   created: 2026-07-26
   medium: photo
-  image: ../assets/life/half-dome-looking-out.jpeg
-- id: half-dome
-  title: Half Dome
+  image: ../assets/life/eagle-peak-summit.jpeg
+- id: el-capitan-summit
+  title: El Capitan summit
   created: 2026-07-26
   medium: photo
-  image: ../assets/life/half-dome.jpeg
+  image: ../assets/life/el-capitan-summit.jpeg
+- id: hardsummer-la
+  title: HARD Summer, LA
+  created: 2026-08-02
+  medium: photo
+  image: ../assets/life/hardsummer-la.jpeg
+- id: bowser
+  title: Bowser
+  created: 2026-08-03
+  medium: photo
+  image: ../assets/life/bowser.jpeg

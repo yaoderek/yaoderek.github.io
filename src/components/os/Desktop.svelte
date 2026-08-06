@@ -146,7 +146,7 @@
   const PHOTOS_MARGIN = 12;
 
   /** The picture the desktop greets a visitor with, from the life album. */
-  const GREETING_PHOTO = 'pier-at-night';
+  const GREETING_PHOTO = 'bowser';
 
   function viewport() {
     return { vw: window.innerWidth, vh: window.innerHeight };
