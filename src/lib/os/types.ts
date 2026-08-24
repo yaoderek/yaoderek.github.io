@@ -1,10 +1,26 @@
 export type AppId =
   | 'finder'
-  | 'project'
+  | 'notes'
   | 'doc'
   | 'photos'
   | 'about'
   | 'trash';
+
+/**
+ * A note in the Notes app: the README and everything under /writing.
+ *
+ * The body travels on the note's own filesystem node rather than on a folder,
+ * so the serialized tree carries each piece of writing exactly once.
+ */
+export type NoteItem = {
+  id: string;                            // slug, or 'readme'
+  path: string;                          // filesystem path, so a window owns a URL
+  title: string;
+  created: string;                       // ISO date
+  html: string;
+  snippet: string;                       // first line, shown in the list
+  pinned?: boolean;
+};
 
 /** A picture in the Photos app: a drawing from /art or a photo from /life. */
 export type PhotoItem = {

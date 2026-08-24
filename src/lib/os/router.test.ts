@@ -26,7 +26,7 @@ describe('pathForWin', () => {
   });
 
   it('returns the node path for a project window', () => {
-    expect(pathForWin({ app: 'project', path: '/projects/speakeasy' })).toBe(
+    expect(pathForWin({ app: 'notes', path: '/projects/speakeasy' })).toBe(
       '/projects/speakeasy'
     );
   });

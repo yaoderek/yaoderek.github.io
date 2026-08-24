@@ -33,7 +33,20 @@ const fixtureTree: FSNode = {
       path: '/README.txt',
       kind: 'Plain Text',
       icon: 'doc',
-      open: { app: 'doc', props: { title: 'README.txt', html: '<p>hi</p>' } },
+      open: {
+        app: 'notes',
+        props: {
+          note: {
+            id: 'readme',
+            path: '/README.txt',
+            title: 'README.txt',
+            created: '2025-01-01',
+            html: '<p>hi</p>',
+            snippet: 'hi',
+            pinned: true,
+          },
+        },
+      },
     },
     {
       name: 'projects',
@@ -46,16 +59,18 @@ const fixtureTree: FSNode = {
           path: '/projects/speakeasy',
           kind: 'Web app',
           icon: 'app',
+          created: '2024-06-01',
           open: {
-            app: 'project',
+            app: 'notes',
             props: {
-              title: 'SpeakEasy',
-              oneLiner: 'Speech feedback',
-              stack: ['TypeScript'],
-              status: 'shipped',
-              created: '2024-06-01',
-              imageUrls: [],
-              bodyHtml: '<p>details</p>',
+              note: {
+                id: 'speakeasy',
+                path: '/projects/speakeasy',
+                title: 'SpeakEasy',
+                created: '2024-06-01',
+                html: '<p>Speech feedback</p><p>details</p>',
+                snippet: 'Speech feedback',
+              },
             },
           },
         },

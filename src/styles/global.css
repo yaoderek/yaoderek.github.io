@@ -35,6 +35,13 @@
   --photo-scrim-hover: rgba(0, 0, 0, 0.18);
   --photo-ring: #1d1d1f;
   --photo-link: #0064e1;
+
+  /* Notes app: the note list beside the page, and Notes' yellow selection */
+  --note-list-bg: #f7f7f5;
+  --note-sel: #fbe9a8;
+  --note-sel-idle: rgba(0, 0, 0, 0.06);
+  --note-accent: #e6b64c;
+  --note-field: rgba(0, 0, 0, 0.05);
 }
 
 /* macOS dark register — applied as a class on the desktop root. */
@@ -60,6 +67,11 @@
   --photo-scrim-hover: rgba(255, 255, 255, 0.24);
   --photo-ring: #ffffff;
   --photo-link: #0a84ff;
+  --note-list-bg: #232325;
+  --note-sel: #4a3f1d;
+  --note-sel-idle: rgba(255, 255, 255, 0.08);
+  --note-accent: #e6b64c;
+  --note-field: rgba(255, 255, 255, 0.08);
 }
 
 * { box-sizing: border-box; }

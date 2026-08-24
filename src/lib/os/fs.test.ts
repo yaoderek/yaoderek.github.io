@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { buildTree, findNode } from './fs';
-import type { TreeInput } from './types';
+import type { NoteItem, TreeInput } from './types';
 
 const fixture: TreeInput = {
   readme: {
@@ -74,8 +74,13 @@ describe('buildTree', () => {
     const readme = root.children!.find((c) => c.name === 'README.txt')!;
     expect(readme.kind).toBe('Plain Text');
     expect(readme.path).toBe('/README.txt');
-    expect(readme.open?.app).toBe('doc');
-    expect((readme.open?.props as { title: string }).title).toBe('README.txt');
+    expect(readme.open?.app).toBe('notes');
+    const note = readme.open?.props.note as NoteItem;
+    expect(note.id).toBe('readme');
+    expect(note.title).toBe('README.txt');
+    expect(note.path).toBe('/README.txt');
+    // The introduction leads the list regardless of its date.
+    expect(note.pinned).toBe(true);
   });
 
   it('README node meta is [["Kind","Plain Text"],["Created",<formatted date>]]', () => {
@@ -130,17 +135,76 @@ describe('buildTree', () => {
     expect(meta[3][1]).toBe('shipped');
   });
 
-  it('project node open.app === "project" with correct props', () => {
+  it('project node open.app === "notes", titled and dated from the project', () => {
     const speakeasy = findNode(root, '/projects/speakeasy')!;
-    expect(speakeasy.open?.app).toBe('project');
-    const props = speakeasy.open?.props as Record<string, unknown>;
-    expect(props.title).toBe('SpeakEasy');
-    expect(props.oneLiner).toBe('An AI conversation trainer');
-    expect(props.stack).toEqual(['FastAPI', 'React']);
-    expect(props.status).toBe('shipped');
-    expect(props.bodyHtml).toBe('<p>SpeakEasy helps you practice conversations.</p>');
-    expect(props.repo).toBe('https://github.com/derekYao/speakeasy');
-    expect(props.demo).toBe('https://speakeasy.app');
+    expect(speakeasy.open?.app).toBe('notes');
+    const note = speakeasy.open?.props.note as NoteItem;
+    expect(note.id).toBe('speakeasy');
+    expect(note.path).toBe('/projects/speakeasy');
+    // Prefixed, so a project stands out in Notes' one flat list.
+    expect(note.title).toBe('(project) SpeakEasy');
+    expect(note.created).toBe('2024-06-01');
+    // The one-liner is what the list row shows under the title.
+    expect(note.snippet).toBe('An AI conversation trainer');
+  });
+
+  it('project note carries the one-liner, the facts, the shots, and the body', () => {
+    const speakeasy = findNode(root, '/projects/speakeasy')!;
+    const { html } = speakeasy.open?.props.note as NoteItem;
+
+    expect(html).toContain('<p>An AI conversation trainer</p>');
+    expect(html).toContain('<dt>stack</dt><dd>FastAPI, React</dd>');
+    expect(html).toContain('<dt>status</dt><dd>shipped</dd>');
+    expect(html).toContain('<dt>kind</dt><dd>Web app</dd>');
+    // Links show where they go, not the whole URL.
+    expect(html).toContain('href="https://github.com/derekYao/speakeasy"');
+    expect(html).toContain('>github.com/derekYao/speakeasy</a>');
+    expect(html).toContain('>speakeasy.app</a>');
+    // Every screenshot rides along, captioned for screen readers.
+    expect(html).toContain('src="/images/speakeasy-1.png"');
+    expect(html).toContain('src="/images/speakeasy-2.png"');
+    expect(html).toContain('alt="SpeakEasy screenshot 2"');
+    // The case study reads last.
+    expect(html).toContain('<p>SpeakEasy helps you practice conversations.</p>');
+  });
+
+  it('project note leaves out repo and demo rows when there are none', () => {
+    const bare = buildTree({
+      ...fixture,
+      projects: [
+        {
+          ...fixture.projects[0],
+          slug: 'quiet',
+          repo: undefined,
+          demo: undefined,
+        },
+      ],
+    });
+    const { html } = findNode(bare, '/projects/quiet')!.open?.props
+      .note as NoteItem;
+    expect(html).not.toContain('<dt>repo</dt>');
+    expect(html).not.toContain('<dt>demo</dt>');
+  });
+
+  it('project note escapes text that would otherwise be markup', () => {
+    const risky = buildTree({
+      ...fixture,
+      projects: [
+        {
+          ...fixture.projects[0],
+          slug: 'risky',
+          oneLiner: 'Tools & <toys>',
+        },
+      ],
+    });
+    const { html } = findNode(risky, '/projects/risky')!.open?.props
+      .note as NoteItem;
+    expect(html).toContain('Tools &amp; &lt;toys&gt;');
+  });
+
+  it('project node keeps its thumbnail for the Finder icon', () => {
+    const speakeasy = findNode(root, '/projects/speakeasy')!;
+    expect(speakeasy.previewImage).toBe('/images/speakeasy-thumb.png');
   });
 
   it('writing node has kind "Plain Text" with correct meta', () => {
@@ -154,13 +218,16 @@ describe('buildTree', () => {
     expect(meta[2][0]).toBe('Words');
   });
 
-  it('writing node open.app === "doc" with title and html', () => {
+  it('writing node open.app === "notes" and carries the note itself', () => {
     const article = findNode(root, '/writing/on-design')!;
-    expect(article.open?.app).toBe('doc');
-    const props = article.open?.props as Record<string, unknown>;
-    expect(props.title).toBe('On Design');
-    expect(props.html).toBe('<p>Design is intention made visible.</p>');
-    expect(props.created).toBe('2024-03-15');
+    expect(article.open?.app).toBe('notes');
+    const note = article.open?.props.note as NoteItem;
+    expect(note.id).toBe('on-design');
+    expect(note.path).toBe('/writing/on-design');
+    expect(note.title).toBe('On Design');
+    expect(note.html).toBe('<p>Design is intention made visible.</p>');
+    expect(note.created).toBe('2024-03-15');
+    expect(note.pinned).toBeUndefined();
   });
 
   it('writing node meta includes word count', () => {

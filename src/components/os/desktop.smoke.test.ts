@@ -42,7 +42,48 @@ const fixtureTree: FSNode = {
       path: '/README.txt',
       kind: 'Plain Text',
       icon: 'doc',
-      open: { app: 'doc', props: { title: 'README.txt', html: '<p>hi</p>' } },
+      open: {
+        app: 'notes',
+        props: {
+          note: {
+            id: 'readme',
+            path: '/README.txt',
+            title: 'README.txt',
+            created: '2025-01-01',
+            html: '<p>hi</p>',
+            snippet: 'hi',
+            pinned: true,
+          },
+        },
+      },
+    },
+    {
+      name: 'writing',
+      path: '/writing',
+      kind: 'Folder',
+      icon: 'folder',
+      children: [
+        {
+          name: 'on-design.txt',
+          path: '/writing/on-design',
+          kind: 'Plain Text',
+          icon: 'doc',
+          created: '2025-06-01',
+          open: {
+            app: 'notes',
+            props: {
+              note: {
+                id: 'on-design',
+                path: '/writing/on-design',
+                title: 'On Design',
+                created: '2025-06-01',
+                html: '<p>Design is intention made visible.</p>',
+                snippet: 'Design is intention made visible.',
+              },
+            },
+          },
+        },
+      ],
     },
     {
       name: 'projects',
@@ -55,16 +96,18 @@ const fixtureTree: FSNode = {
           path: '/projects/my-project',
           kind: 'Application',
           icon: 'app',
+          created: '2024-01-01',
           open: {
-            app: 'project',
+            app: 'notes',
             props: {
-              title: 'My Project',
-              oneLiner: 'A cool project',
-              stack: ['TypeScript'],
-              status: 'active',
-              created: '2024-01-01',
-              imageUrls: [],
-              bodyHtml: '<p>details</p>',
+              note: {
+                id: 'my-project',
+                path: '/projects/my-project',
+                title: 'My Project',
+                created: '2024-01-01',
+                html: '<p>A cool project</p><dl class="contact"><div><dt>stack</dt><dd>TypeScript</dd></div></dl><p>details</p>',
+                snippet: 'A cool project',
+              },
             },
           },
         },
@@ -73,16 +116,18 @@ const fixtureTree: FSNode = {
           path: '/projects/speakeasy',
           kind: 'Application',
           icon: 'app',
+          created: '2024-06-01',
           open: {
-            app: 'project',
+            app: 'notes',
             props: {
-              title: 'SpeakEasy',
-              oneLiner: 'Speech feedback app',
-              stack: ['TypeScript'],
-              status: 'shipped',
-              created: '2024-06-01',
-              imageUrls: [],
-              bodyHtml: '<p>details</p>',
+              note: {
+                id: 'speakeasy',
+                path: '/projects/speakeasy',
+                title: 'SpeakEasy',
+                created: '2024-06-01',
+                html: '<p>Speech feedback app</p><p>details</p>',
+                snippet: 'Speech feedback app',
+              },
             },
           },
         },
@@ -92,8 +137,7 @@ const fixtureTree: FSNode = {
 };
 
 // Two albums: art and life. The folders and the pictures inside them all open
-// the Photos app. The last life photo stands in for the greeting photo, which
-// the desktop falls back to when the real greeting photo isn't in the album.
+// the Photos app.
 const artItems = [
   {
     id: 'poseidon',
@@ -186,7 +230,7 @@ test('desktop with initialPath opens named window', async () => {
   target.remove();
 });
 
-test('desktop opens a project window rendering its metadata', async () => {
+test('a project opens as a note, one-liner and facts and all', async () => {
   const target = document.createElement('div');
   document.body.appendChild(target);
   const app = mount(Desktop, {
@@ -198,9 +242,14 @@ test('desktop opens a project window rendering its metadata', async () => {
     },
   });
   await new Promise((r) => setTimeout(r, 50));
-  // ProjectWindow renders the one-liner and the stack metadata value.
-  expect(target.textContent).toContain('A cool project');
-  expect(target.textContent).toContain('TypeScript');
+
+  const note = target.querySelector('[role="dialog"][aria-label="My Project"]');
+  expect(note).not.toBeNull();
+  expect(note!.textContent).toContain('A cool project');
+  expect(note!.textContent).toContain('TypeScript');
+  // The other project sits in the note list beside it.
+  expect(note!.textContent).toContain('SpeakEasy');
+
   unmount(app);
   target.remove();
 });
@@ -255,27 +304,28 @@ test('a11y: dialog role + aria-label present; Esc closes top window', async () =
   });
   await new Promise((r) => setTimeout(r, 50));
 
-  // Docs read inline: no README window opens — the Finder dialog shows the
-  // README content in its preview pane instead.
+  // The Finder plus the Notes window the README opens in.
   const dialogs = target.querySelectorAll('[role="dialog"]');
-  expect(dialogs.length).toBe(1);
+  expect(dialogs.length).toBe(2);
 
   const finderDialog = target.querySelector('[role="dialog"][aria-label="derek\'s mac"]');
   expect(finderDialog).not.toBeNull();
   expect(finderDialog!.textContent).toContain('README.txt');
 
-  // Dispatch Escape — closes the top (Finder) window.
+  // Dispatch Escape — closes the top (Notes) window, leaving the Finder.
   window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
   await new Promise((r) => setTimeout(r, 50));
 
-  const finderAfter = target.querySelector('[role="dialog"][aria-label="derek\'s mac"]');
-  expect(finderAfter).toBeNull();
+  expect(target.querySelectorAll('[role="dialog"]').length).toBe(1);
+  expect(
+    target.querySelector('[role="dialog"][aria-label="derek\'s mac"]')
+  ).not.toBeNull();
 
   unmount(app);
   target.remove();
 });
 
-test('startup opens Photos on the greeting photo, with a running dot in the dock', async () => {
+test('startup opens the Finder and Notes on the README, side by side', async () => {
   const target = document.createElement('div');
   document.body.appendChild(target);
   const app = mount(Desktop, {
@@ -284,16 +334,76 @@ test('startup opens Photos on the greeting photo, with a running dot in the dock
   });
   await new Promise((r) => setTimeout(r, 50));
 
-  const photos = target.querySelector('[role="dialog"][aria-label="Photos"]');
-  expect(photos).not.toBeNull();
-  // One photo from the life album is showing, not a grid: the greeting photo,
-  // which falls back to the last one in this fixture.
-  expect(photos!.textContent).toContain('2 of 2');
-  expect(photos!.textContent).toContain('Taipei metro');
-  // The Finder is still open beside it.
-  expect(target.querySelector('[role="dialog"][aria-label="derek\'s mac"]')).not.toBeNull();
+  const finder = target.querySelector<HTMLElement>(
+    '[role="dialog"][aria-label="derek\'s mac"]'
+  );
+  const notes = target.querySelector<HTMLElement>(
+    '[role="dialog"][aria-label="README.txt"]'
+  );
+  expect(finder).not.toBeNull();
+  expect(notes).not.toBeNull();
+  // Notes opened on the README itself, not on some other note.
+  expect(notes!.textContent).toContain('hi');
+  // Photos no longer greets anyone: the pair is the whole arrangement.
+  expect(target.querySelector('[role="dialog"][aria-label="Photos"]')).toBeNull();
+  // Side by side, with Notes to the right of the Finder.
+  expect(parseFloat(notes!.style.left)).toBeGreaterThan(
+    parseFloat(finder!.style.left)
+  );
   // Dock marks open apps the way macOS does.
   expect(target.querySelector('.running-dot')).not.toBeNull();
+
+  unmount(app);
+  target.remove();
+});
+
+test('a deep-linked piece of writing opens in Notes, alongside the other notes', async () => {
+  const target = document.createElement('div');
+  document.body.appendChild(target);
+  const app = mount(Desktop, {
+    target,
+    props: {
+      tree: lifeTree,
+      initialPath: '/writing/on-design',
+      showResume: false,
+    },
+  });
+  await new Promise((r) => setTimeout(r, 50));
+
+  const notes = target.querySelector('[role="dialog"][aria-label="On Design"]');
+  expect(notes).not.toBeNull();
+  expect(notes!.textContent).toContain('Design is intention made visible.');
+  // The list beside it carries every note, with the pinned README on top.
+  expect(notes!.textContent).toContain('Pinned');
+  expect(notes!.textContent).toContain('README.txt');
+
+  unmount(app);
+  target.remove();
+});
+
+test('the Notes dock icon opens Notes on the pinned note', async () => {
+  const target = document.createElement('div');
+  document.body.appendChild(target);
+  // A deep-linked photo leaves Notes closed, so the dock click is what opens it.
+  const app = mount(Desktop, {
+    target,
+    props: {
+      tree: lifeTree,
+      initialPath: '/life/taipei-metro',
+      showResume: false,
+    },
+  });
+  await new Promise((r) => setTimeout(r, 50));
+  expect(target.querySelector('[role="dialog"][aria-label="README.txt"]')).toBeNull();
+
+  const dockNotes = target.querySelector<HTMLButtonElement>(
+    'button[aria-label="Notes"]'
+  );
+  expect(dockNotes).not.toBeNull();
+  dockNotes!.click();
+  await new Promise((r) => setTimeout(r, 50));
+
+  expect(target.querySelector('[role="dialog"][aria-label="README.txt"]')).not.toBeNull();
 
   unmount(app);
   target.remove();
@@ -304,7 +414,11 @@ test('a Photos window opened on a photo is sized to it, not to the app default',
   document.body.appendChild(target);
   const app = mount(Desktop, {
     target,
-    props: { tree: lifeTree, initialPath: null, showResume: false },
+    props: {
+      tree: lifeTree,
+      initialPath: '/life/taipei-metro',
+      showResume: false,
+    },
   });
   await new Promise((r) => setTimeout(r, 50));
 
@@ -344,8 +458,8 @@ test('a deep-linked drawing opens in Photos, in the art album', async () => {
 test('Photos dock icon opens the Photos window on its albums', async () => {
   const target = document.createElement('div');
   document.body.appendChild(target);
-  // A deep link suppresses the startup Photos window, so the dock click is the
-  // only thing that can open it here.
+  // Photos never opens on startup, so the dock click is the only thing that
+  // can open it here.
   const app = mount(Desktop, {
     target,
     props: { tree: lifeTree, initialPath: '/README.txt', showResume: false },

@@ -1,4 +1,4 @@
-import type { FSNode, PhotoItem, TreeInput } from './types';
+import type { FSNode, NoteItem, PhotoItem, TreeInput } from './types';
 import { formatDate, wordCount, firstSentence, stripHtml } from './format';
 
 /**
@@ -11,6 +11,17 @@ export function buildTree(input: TreeInput): FSNode {
     ['Kind', 'Plain Text'],
     ['Created', formatDate(input.readme.created)],
   ];
+  const readmeText = stripHtml(input.readme.text);
+  const readmeNote: NoteItem = {
+    id: 'readme',
+    path: '/README.txt',
+    title: 'README.txt',
+    created: input.readme.created,
+    html: input.readme.text,
+    snippet: firstSentence(readmeText),
+    // The introduction sits at the top of the list, however old it is.
+    pinned: true,
+  };
   const readmeNode: FSNode = {
     name: 'README.txt',
     path: '/README.txt',
@@ -18,15 +29,8 @@ export function buildTree(input: TreeInput): FSNode {
     icon: 'doc',
     created: input.readme.created,
     meta: readmeMeta,
-    blurb: stripHtml(input.readme.text),
-    open: {
-      app: 'doc',
-      props: {
-        title: 'README.txt',
-        html: input.readme.text,
-        created: input.readme.created,
-      },
-    },
+    blurb: readmeText,
+    open: { app: 'notes', props: { note: readmeNote } },
   };
 
   const projectsFolder: FSNode = {
@@ -41,18 +45,16 @@ export function buildTree(input: TreeInput): FSNode {
         ['Stack', p.stack.join(', ')],
         ['Status', p.status],
       ];
-      const openProps: Record<string, unknown> = {
-        title: p.title,
-        oneLiner: p.oneLiner,
-        stack: p.stack,
-        status: p.status,
+      const note: NoteItem = {
+        id: p.slug,
+        path: `/projects/${p.slug}`,
+        // Notes keeps one flat list, so the prefix is what tells a project
+        // apart from a piece of writing at a glance.
+        title: `(project) ${p.title}`,
         created: p.created,
-        thumbUrl: p.thumbUrl,
-        imageUrls: p.imageUrls,
-        bodyHtml: p.bodyHtml,
+        html: projectNoteHtml(p),
+        snippet: p.oneLiner,
       };
-      if (p.repo !== undefined) openProps.repo = p.repo;
-      if (p.demo !== undefined) openProps.demo = p.demo;
       return {
         name: `${p.slug}.app`,
         path: `/projects/${p.slug}`,
@@ -60,7 +62,10 @@ export function buildTree(input: TreeInput): FSNode {
         icon: 'app',
         created: p.created,
         meta,
-        open: { app: 'project', props: openProps },
+        // Keeps the thumbnail on the icon now that the app props are gone.
+        previewImage: p.thumbUrl,
+        blurb: p.oneLiner,
+        open: { app: 'notes', props: { note } },
       } satisfies FSNode;
     }),
   };
@@ -77,6 +82,15 @@ export function buildTree(input: TreeInput): FSNode {
         ['Created', formatDate(w.created)],
         ['Words', String(wc)],
       ];
+      const snippet = firstSentence(w.bodyText);
+      const note: NoteItem = {
+        id: w.slug,
+        path: `/writing/${w.slug}`,
+        title: w.title,
+        created: w.created,
+        html: w.bodyHtml,
+        snippet,
+      };
       return {
         name: `${w.slug}.txt`,
         path: `/writing/${w.slug}`,
@@ -84,15 +98,8 @@ export function buildTree(input: TreeInput): FSNode {
         icon: 'doc',
         created: w.created,
         meta,
-        blurb: firstSentence(w.bodyText),
-        open: {
-          app: 'doc',
-          props: {
-            title: w.title,
-            html: w.bodyHtml,
-            created: w.created,
-          },
-        },
+        blurb: snippet,
+        open: { app: 'notes', props: { note } },
       } satisfies FSNode;
     }),
   };
@@ -110,6 +117,61 @@ export function buildTree(input: TreeInput): FSNode {
       buildAlbumFolder('life', input.life),
     ],
   };
+}
+
+/**
+ * A project written out as a note: the one-liner, the facts worth knowing,
+ * the screenshots, then the case study.
+ *
+ * Notes has no two-pane case-study layout, so the same material reads top to
+ * bottom. The definition list matches the README's contact block, which the
+ * note styles already lay out as a label/value grid.
+ */
+function projectNoteHtml(p: TreeInput['projects'][number]): string {
+  const facts = [
+    fact('kind', escapeHtml(p.kind)),
+    fact('stack', escapeHtml(p.stack.join(', '))),
+    fact('status', escapeHtml(p.status)),
+    p.repo ? fact('repo', externalLink(p.repo)) : '',
+    p.demo ? fact('demo', externalLink(p.demo)) : '',
+  ].join('');
+
+  const shots = p.imageUrls
+    .map(
+      (url, i) =>
+        `<p><img src="${escapeHtml(url)}" alt="${escapeHtml(p.title)} screenshot ${
+          i + 1
+        }" loading="lazy" decoding="async" /></p>`
+    )
+    .join('\n');
+
+  return [
+    `<p>${escapeHtml(p.oneLiner)}</p>`,
+    `<dl class="contact">${facts}</dl>`,
+    shots,
+    p.bodyHtml,
+  ]
+    .filter(Boolean)
+    .join('\n');
+}
+
+function fact(label: string, valueHtml: string): string {
+  return `<div><dt>${label}</dt><dd>${valueHtml}</dd></div>`;
+}
+
+/** A link that shows where it goes rather than the whole URL. */
+function externalLink(url: string): string {
+  const safe = escapeHtml(url);
+  const shown = escapeHtml(url.replace(/^https?:\/\//, '').replace(/\/$/, ''));
+  return `<a href="${safe}" target="_blank" rel="noopener">${shown}</a>`;
+}
+
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 }
 
 /**

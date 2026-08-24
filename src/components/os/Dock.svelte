@@ -1,7 +1,6 @@
 <script lang="ts">
   import { magnify } from '../../lib/os/dock';
   import type { Win } from '../../lib/os/windows';
-  import { onDestroy } from 'svelte';
 
   type DockItem = {
     id: string;
@@ -33,23 +32,12 @@
     isMobile = false,
   }: Props = $props();
 
-  // Touch device detection — always visible, no magnification
+  // Touch device detection — no magnification, since there's no pointer to
+  // track. The dock itself is always on screen either way.
   const isTouch =
     typeof window !== 'undefined' && typeof window.matchMedia === 'function'
       ? window.matchMedia('(hover: none)').matches
       : false;
-
-  // Auto-hide state
-  let visible = $state(isTouch);
-  let hideTimer: ReturnType<typeof setTimeout> | null = null;
-
-  // Fix 1: clear pending hide timer on destroy to avoid leak
-  onDestroy(() => {
-    if (hideTimer !== null) {
-      clearTimeout(hideTimer);
-      hideTimer = null;
-    }
-  });
 
   // Per-icon scale (keyed by index across all sections)
   // sections: items + minimized + trailing
@@ -66,33 +54,8 @@
   // Dock container ref
   let dockEl = $state<HTMLElement | null>(null);
 
-  function showDock() {
-    if (hideTimer !== null) {
-      clearTimeout(hideTimer);
-      hideTimer = null;
-    }
-    visible = true;
-  }
-
-  function scheduledHide() {
-    if (hideTimer !== null) clearTimeout(hideTimer);
-    hideTimer = setTimeout(() => {
-      visible = false;
-      hideTimer = null;
-    }, 400);
-  }
-
-  function onHotzoneEnter() {
-    if (!isTouch) showDock();
-  }
-
-  function onDockEnter() {
-    if (!isTouch) showDock();
-  }
-
   function onDockLeave() {
-    if (!isTouch) scheduledHide();
-    // Also reset magnification scales
+    // Settle the icons back to their resting size once the pointer leaves.
     scales = Array(totalCount).fill(1);
   }
 
@@ -114,6 +77,7 @@
   function iconForApp(app: string): string | undefined {
     switch (app) {
       case 'finder': return appIcons.finder;
+      case 'notes': return appIcons.notes;
       case 'doc': return appIcons.notes;
       case 'photos': return appIcons.photos;
       default: return appIcons.notes;
@@ -121,26 +85,12 @@
   }
 </script>
 
-<!-- Hot zone — always present, handles pointer entry from bottom edge.
-     role="presentation" is appropriate: this is a pointer-only affordance with
-     no semantic meaning; keyboard users reach the dock via focus-within instead. -->
-{#if !isTouch}
-  <div
-    class="hotzone"
-    role="presentation"
-    onpointerenter={onHotzoneEnter}
-  ></div>
-{/if}
-
 <!-- role="presentation" on the wrapper: the interactive content is the <nav>
-     inside; the wrapper itself is a layout/animation container. -->
+     inside; the wrapper itself is a layout container. -->
 <div
   class="dock-wrapper"
-  class:visible
-  class:reduced={reducedMotion}
   role="presentation"
   bind:this={dockEl}
-  onpointerenter={onDockEnter}
   onpointerleave={onDockLeave}
   onpointermove={onDockPointerMove}
 >
@@ -184,11 +134,7 @@
             data-restore-id={win.id}
             bind:this={iconRefs[idx]}
           >
-            {#if win.app === 'project' && win.props.thumbUrl}
-              <span class="win-thumb">
-                <img src={win.props.thumbUrl as string} alt={win.title}/>
-              </span>
-            {:else if iconForApp(win.app)}
+            {#if iconForApp(win.app)}
               <img class="app-icon" src={iconForApp(win.app)} alt="" draggable="false" />
             {/if}
             <span class="tooltip">{win.title}</span>
@@ -227,20 +173,12 @@
 </div>
 
 <style>
-  /* Hot zone: thin strip at the very bottom */
-  .hotzone {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    z-index: 9999;
-    pointer-events: auto;
-  }
-
   /* Dock wrapper: spans the full width and flex-centers the shelf, which is
      robust across browsers (mixing `translate` with `transform` for centering
-     broke centering where the `translate` property is unsupported). */
+     broke centering where the `translate` property is unsupported).
+
+     The dock never hides: it sits on the desktop the whole time, so the
+     wrapper stays put and only the shelf inside it takes pointer events. */
   .dock-wrapper {
     position: fixed;
     bottom: 8px;
@@ -250,31 +188,10 @@
     justify-content: center;
     z-index: 9998;
     pointer-events: none;
-    /* Hidden by default: slide below viewport */
-    transform: translateY(calc(100% + 12px));
   }
 
-  /* Visible state (mouse hover or keyboard focus within dock) */
-  .dock-wrapper.visible,
-  .dock-wrapper:focus-within {
-    transform: translateY(0);
+  .dock-wrapper > :global(*) {
     pointer-events: auto;
-  }
-
-  /* Animate show/hide (skip under reduced motion) */
-  @media (prefers-reduced-motion: no-preference) {
-    .dock-wrapper:not(.reduced) {
-      transition: transform 240ms cubic-bezier(0.2, 0.8, 0.2, 1);
-    }
-    /* Hiding is slightly slower */
-    .dock-wrapper:not(.visible):not(.reduced) {
-      transition: transform 240ms cubic-bezier(0.4, 0, 1, 1);
-    }
-  }
-
-  /* Always visible on touch */
-  .dock-wrapper.visible.reduced {
-    transition: none;
   }
 
   /* The shelf itself */
@@ -357,20 +274,6 @@
     border-radius: 50%;
     background: var(--dock-dot);
     pointer-events: none;
-  }
-
-  .minimized-win .win-thumb {
-    display: block;
-    width: 44px;
-    height: 44px;
-    border-radius: 9.68px;
-    overflow: hidden;
-  }
-
-  .minimized-win .win-thumb img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
   }
 
   /* Vertical hairline divider */

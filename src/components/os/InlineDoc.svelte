@@ -108,4 +108,14 @@
   .body :global(dl.contact dd) {
     margin: 0;
   }
+
+  /* Project screenshots, sitting in the note the way an attachment does. */
+  .body :global(img) {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    margin: 4px 0;
+    border-radius: 8px;
+    box-shadow: 0 0 0 0.5px var(--hairline);
+  }
 </style>

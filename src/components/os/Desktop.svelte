@@ -1,7 +1,8 @@
 <script lang="ts">
-  import type { FSNode, AppId } from '../../lib/os/types';
+  import type { FSNode, AppId, NoteItem } from '../../lib/os/types';
   import type { Win } from '../../lib/os/windows';
   import { findNode } from '../../lib/os/fs';
+  import { noteList, noteOrFirst } from '../../lib/os/notes';
   import { photoAlbums, photoAt, photoWindowSize } from '../../lib/os/photos';
   import {
     pathForWin,
@@ -22,6 +23,7 @@
     move,
     resize,
     topWindow,
+    MIN_W,
   } from '../../lib/os/windows';
   import Window from './Window.svelte';
   import MenuBar from './MenuBar.svelte';
@@ -29,8 +31,8 @@
   import Dock from './Dock.svelte';
   import MobileFiles from './MobileFiles.svelte';
   import AboutWindow from './apps/AboutWindow.svelte';
-  import ProjectWindow from './apps/ProjectWindow.svelte';
   import DocWindow from './apps/DocWindow.svelte';
+  import NotesWindow from './apps/NotesWindow.svelte';
   import PhotosWindow from './apps/PhotosWindow.svelte';
   import TrashWindow from './apps/TrashWindow.svelte';
 
@@ -134,7 +136,7 @@
   // Per-app default window sizes. A Photos window opened on a picture is sized
   // to that picture instead (see photoWindowSize).
   const SIZES: Record<AppId, { w: number; h: number }> = {
-    project: { w: 980, h: 620 },
+    notes: { w: 820, h: 580 },
     doc: { w: 640, h: 560 },
     photos: { w: 780, h: 680 },
     finder: { w: 960, h: 560 },
@@ -145,8 +147,16 @@
   // Breathing room between a photo window and the edge of the screen.
   const PHOTOS_MARGIN = 12;
 
-  /** The picture the desktop greets a visitor with, from the life album. */
-  const GREETING_PHOTO = 'bowser';
+  /** The note the desktop opens Notes on. */
+  const GREETING_NOTE = 'readme';
+
+  // The startup pair: the space between the Finder and Notes, and the margin
+  // kept either side of them.
+  const GREETING_GAP = 16;
+  const GREETING_MARGIN = 12;
+
+  /** Where and how big a window should open, when the caller has an opinion. */
+  type Frame = { x?: number; y?: number; w?: number; h?: number };
 
   function viewport() {
     return { vw: window.innerWidth, vh: window.innerHeight };
@@ -157,6 +167,9 @@
 
   const lifeAlbum = $derived(albums.find((a) => a.id === 'life') ?? null);
 
+  // The README and everything under /writing, gathered for the Notes app.
+  const notes = $derived(noteList(tree));
+
   /**
    * Open (or focus) the appropriate window for a filesystem path.
    * - A node with an `open` spec launches that app.
@@ -166,10 +179,11 @@
     const node = findNode(tree, path);
     if (!node) return;
 
-    // Docs and projects read inline in the Finder's preview pane — select the
-    // file rather than opening a window.
-    if (node.open && (node.open.app === 'doc' || node.open.app === 'project')) {
-      openInFinder(node.path);
+    // The README, the projects, and everything under /writing belong to the
+    // Notes app. The Finder still previews them inline, but opening one hands
+    // it to Notes.
+    if (node.open && node.open.app === 'notes') {
+      openNotes((node.open.props.note as NoteItem).id);
       return;
     }
 
@@ -209,10 +223,12 @@
    * Open (or focus) the single Finder window with `selection` selected.
    * When the Finder already exists, `navigate` drives its selection via the
    * one-shot signal (false = just focus, e.g. clicking the Finder dock icon).
+   * `frame` overrides where and how big it opens (see openGreeting).
    */
-  function openInFinder(selection: string, navigate = true, x?: number) {
-    const { w, h } = SIZES.finder;
-    const finderExists = wins.some((w) => w.app === 'finder');
+  function openInFinder(selection: string, navigate = true, frame: Frame = {}) {
+    const w = frame.w ?? SIZES.finder.w;
+    const h = frame.h ?? SIZES.finder.h;
+    const finderExists = wins.some((win) => win.app === 'finder');
     const vp = viewport();
     wins = open(
       wins,
@@ -224,12 +240,64 @@
         w,
         h,
         // Spawn centered (slight upward bias, like macOS), not cascaded.
-        x: x ?? Math.round((vp.vw - w) / 2),
-        y: Math.round(Math.max(24, (vp.vh - h) * 0.42)),
+        x: frame.x ?? Math.round((vp.vw - w) / 2),
+        y: frame.y ?? Math.round(Math.max(24, (vp.vh - h) * 0.42)),
       },
       vp
     );
     if (finderExists && navigate) finderNavigateTo = selection;
+  }
+
+  /**
+   * Open (or focus) the single Notes window on a note.
+   *
+   * Notes keeps one window the way the real app does: opening a second piece of
+   * writing re-targets the window that's already up rather than stacking
+   * another one. A null id falls back to the first note in the list.
+   */
+  function openNotes(noteId: string | null, frame: Frame = {}) {
+    const note = noteOrFirst(notes, noteId);
+    if (!note) return;
+
+    const existing = wins.find((win) => win.app === 'notes');
+    if (existing) {
+      wins = focus(
+        wins.map((win) =>
+          win.id === existing.id ? retargeted(win, note) : win
+        ),
+        existing.id
+      );
+      return;
+    }
+
+    wins = open(
+      wins,
+      {
+        app: 'notes',
+        title: note.title,
+        path: note.path,
+        props: { noteId: note.id },
+        w: frame.w ?? SIZES.notes.w,
+        h: frame.h ?? SIZES.notes.h,
+        x: frame.x,
+        y: frame.y,
+      },
+      viewport()
+    );
+  }
+
+  /**
+   * The window, pointed at a note. The title and path move with the selection
+   * so the title bar names the note and the URL stays shareable.
+   */
+  function retargeted(win: Win, note: NoteItem): Win {
+    return {
+      ...win,
+      minimized: false,
+      title: note.title,
+      path: note.path,
+      props: { ...win.props, noteId: note.id },
+    };
   }
 
   /**
@@ -278,25 +346,48 @@
   }
 
   /**
-   * The opening arrangement on a big screen: the README in the Finder, with
-   * Photos sized to the greeting photo tucked in beside it on the right.
+   * The opening arrangement on a big screen: the Finder on the left with the
+   * README selected, and Notes open on that same README beside it.
+   *
+   * Both windows at their usual size need more width than a laptop screen has,
+   * so the pair is scaled down together until it fits and then centred. They
+   * only give up on sitting side by side when even the minimum widths won't.
    */
   function openGreeting() {
-    const photos = lifeAlbum?.items ?? [];
-    if (photos.length === 0) {
-      openPath('/');
+    const vp = viewport();
+    const room = vp.vw - 2 * GREETING_MARGIN - GREETING_GAP;
+    const wanted = SIZES.finder.w + SIZES.notes.w;
+    const scale = Math.min(1, room / wanted);
+
+    const finderW = Math.max(MIN_W, Math.round(SIZES.finder.w * scale));
+    const notesW = Math.max(MIN_W, Math.round(SIZES.notes.w * scale));
+    const pair = finderW + GREETING_GAP + notesW;
+
+    // Too narrow even at minimum width: let the window manager cascade them.
+    if (pair > vp.vw) {
+      openInFinder('/README.txt', false);
+      openNotes(GREETING_NOTE);
       return;
     }
-    const found = photos.findIndex((photo) => photo.id === GREETING_PHOTO);
-    const index = found >= 0 ? found : photos.length - 1;
-    const vp = viewport();
-    const { w } = photoWindowSize(photos[index], vp);
-    openInFinder(
-      '/README.txt',
-      false,
-      vp.vw - w - PHOTOS_MARGIN - SIZES.finder.w
-    );
-    openPhotos('life', index);
+
+    const left = Math.round((vp.vw - pair) / 2);
+    const top = Math.round(Math.max(24, (vp.vh - SIZES.finder.h) * 0.42));
+
+    openInFinder('/README.txt', false, { x: left, y: top, w: finderW });
+    openNotes(GREETING_NOTE, {
+      x: left + finderW + GREETING_GAP,
+      y: top,
+      w: notesW,
+    });
+  }
+
+  /**
+   * Mobile has no windows either, so the Notes dock icon drills the Files view
+   * into the writing folder and lets the reader pick from there.
+   */
+  function openWritingOnMobile() {
+    mobileNavigateTo = '/writing';
+    onMobileNavigate('/writing');
   }
 
   /**
@@ -514,7 +605,8 @@
       id: 'notes',
       label: 'Notes',
       iconUrl: dockIcons.notes,
-      action: () => openPath('/writing'),
+      running: openApps.has('notes'),
+      action: () => (isMobile ? openWritingOnMobile() : openNotes(null)),
     },
     {
       id: 'photos',
@@ -654,8 +746,17 @@
             />
           {:else if win.app === 'about'}
             <AboutWindow />
-          {:else if win.app === 'project'}
-            <ProjectWindow {...win.props as ComponentProps<typeof ProjectWindow>} />
+          {:else if win.app === 'notes'}
+            <NotesWindow
+              {...win.props as ComponentProps<typeof NotesWindow>}
+              {notes}
+              active={win.id === topId}
+              onselect={(note) => {
+                wins = wins.map((w) =>
+                  w.id === win.id ? retargeted(w, note) : w
+                );
+              }}
+            />
           {:else if win.app === 'doc'}
             <DocWindow {...win.props as ComponentProps<typeof DocWindow>} />
           {:else if win.app === 'photos'}

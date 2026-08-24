@@ -38,8 +38,18 @@ const tree: FSNode = {
       meta: [['Kind', 'Plain Text']],
       blurb: 'Hi, I am Derek.',
       open: {
-        app: 'doc',
-        props: { title: 'README.txt', html: '<p>Hi, I am Derek.</p>' },
+        app: 'notes',
+        props: {
+          note: {
+            id: 'readme',
+            path: '/README.txt',
+            title: 'README.txt',
+            created: '2025-01-01',
+            html: '<p>Hi, I am Derek.</p>',
+            snippet: 'Hi, I am Derek.',
+            pinned: true,
+          },
+        },
       },
     },
     {
@@ -56,15 +66,21 @@ const tree: FSNode = {
           created: '2024-06-01',
           meta: [['Status', 'shipped']],
           open: {
-            app: 'project',
+            app: 'notes',
             props: {
-              title: 'SpeakEasy',
-              oneLiner: 'talks better',
-              stack: ['TypeScript'],
-              status: 'shipped',
-              created: '2024-06-01',
-              imageUrls: [],
-              bodyHtml: '<p>case study body</p>',
+              note: {
+                id: 'speakeasy',
+                path: '/projects/speakeasy',
+                title: 'SpeakEasy',
+                created: '2024-06-01',
+                html:
+                  '<p>talks better</p>' +
+                  '<dl class="contact"><div><dt>kind</dt><dd>Web app</dd></div>' +
+                  '<div><dt>stack</dt><dd>TypeScript</dd></div>' +
+                  '<div><dt>status</dt><dd>shipped</dd></div></dl>' +
+                  '<p>case study body</p>',
+                snippet: 'talks better',
+              },
             },
           },
         },

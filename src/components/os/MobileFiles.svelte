@@ -1,11 +1,11 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import type { FSNode } from '../../lib/os/types';
+  import type { FSNode, NoteItem } from '../../lib/os/types';
   import { findNode } from '../../lib/os/fs';
+  import { noteList } from '../../lib/os/notes';
   import { photoAlbums } from '../../lib/os/photos';
   import Icon from './Icon.svelte';
-  import ProjectWindow from './apps/ProjectWindow.svelte';
-  import DocWindow from './apps/DocWindow.svelte';
+  import NotesWindow from './apps/NotesWindow.svelte';
   import PhotosWindow from './apps/PhotosWindow.svelte';
   import type { ComponentProps } from 'svelte';
 
@@ -32,6 +32,10 @@
   // Picture nodes carry only an album id and an index; the albums themselves
   // come from the tree, same as on the desktop.
   const albums = $derived(photoAlbums(tree));
+
+  // Notes are gathered the same way. The phone shows one note at a time, since
+  // the Files view is already doing the job of the note list.
+  const notes = $derived(noteList(tree));
 
   // Stack of FS paths; top of stack = current view.
   let stack = $state<string[]>(['/']);
@@ -228,10 +232,13 @@
         {@const item = currentItem()}
         {#if item?.open}
           <div class="item-view">
-            {#if item.open.app === 'project'}
-              <ProjectWindow {...item.open.props as ComponentProps<typeof ProjectWindow>} />
-            {:else if item.open.app === 'doc'}
-              <DocWindow {...item.open.props as ComponentProps<typeof DocWindow>} />
+            {#if item.open.app === 'notes'}
+              <NotesWindow
+                {notes}
+                noteId={(item.open.props.note as NoteItem).id}
+                active={true}
+                compact={true}
+              />
             {:else if item.open.app === 'photos'}
               <PhotosWindow
                 {...item.open.props as ComponentProps<typeof PhotosWindow>}

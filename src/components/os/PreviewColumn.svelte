@@ -1,8 +1,7 @@
 <script lang="ts">
-  import type { FSNode } from '../../lib/os/types';
+  import type { FSNode, NoteItem } from '../../lib/os/types';
   import Icon from './Icon.svelte';
   import InlineDoc from './InlineDoc.svelte';
-  import InlineProject from './InlineProject.svelte';
 
   type Props = {
     node: FSNode;
@@ -14,27 +13,24 @@
   const iconKind = $derived(node.icon as 'folder' | 'doc' | 'app' | 'image');
 </script>
 
-{#if node.open?.app === 'doc'}
-  <!-- Text files read inline, Notes-style — no window needed. -->
-  <InlineDoc
-    title={(node.open.props.title as string) ?? node.name}
-    html={(node.open.props.html as string) ?? ''}
-    created={(node.open.props.created as string | undefined) ?? node.created ?? null}
-  />
-{:else if node.open?.app === 'project'}
-  <!-- Projects read inline: case study in the browsing pane. -->
-  <InlineProject
-    title={(node.open.props.title as string) ?? node.name}
-    oneLiner={(node.open.props.oneLiner as string) ?? ''}
-    stack={(node.open.props.stack as string[]) ?? []}
-    status={(node.open.props.status as string) ?? ''}
-    created={(node.open.props.created as string) ?? node.created ?? ''}
-    imageUrls={(node.open.props.imageUrls as string[]) ?? []}
-    bodyHtml={(node.open.props.bodyHtml as string) ?? ''}
-    repo={(node.open.props.repo as string | undefined) ?? null}
-    demo={(node.open.props.demo as string | undefined) ?? null}
-    thumbUrl={(node.open.props.thumbUrl as string | undefined) ?? null}
-  />
+{#if node.open?.app === 'notes'}
+  {@const note = node.open.props.note as NoteItem}
+  <!-- Notes still read inline here, so browsing the Finder shows the writing
+       without a window. Opening one hands it to the Notes app. -->
+  <div class="note-preview">
+    <div class="note-bar">
+      <button class="open-in" onclick={() => onopen(node.path)}>
+        Open in Notes
+      </button>
+    </div>
+    <div class="note-body">
+      <InlineDoc
+        title={note?.title ?? node.name}
+        html={note?.html ?? ''}
+        created={note?.created ?? node.created ?? null}
+      />
+    </div>
+  </div>
 {:else}
   <div class="preview">
     <div class="visual">
@@ -154,5 +150,42 @@
 
   .open:hover {
     text-decoration: underline;
+  }
+
+  /* Inline note preview: a thin bar above the reading pane, so the Finder
+     hands the note off to Notes without the reader guessing at a double-click. */
+  .note-preview {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background: var(--paper);
+  }
+
+  .note-bar {
+    flex: 0 0 auto;
+    display: flex;
+    justify-content: flex-end;
+    padding: 6px 10px 0;
+  }
+
+  .note-body {
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+
+  .open-in {
+    font-size: 11.5px;
+    color: var(--accent);
+    padding: 2px 8px;
+    border-radius: 5px;
+  }
+
+  .open-in:hover {
+    background: var(--hover-dim);
+  }
+
+  .open-in:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
   }
 </style>
