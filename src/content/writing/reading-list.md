@@ -7,7 +7,7 @@ reading list
 
 ## favorites all time
 
-- read - the picture of dorian gray
+- the picture of dorian gray
 - someone who will love you in all your damaged glory
 - the glass castle
 - tomorrow and tomorrow and tomorrow
@@ -23,13 +23,13 @@ reading list
 
 ## fiction
 
-- read - on earth we’re briefly gorgeous
-- read - up in the air
-- read - the road
+- on earth we’re briefly gorgeous
+- up in the air
+- the road
 - giovannis room
 - salvage the bones
 - how to be eaten
-- read - never let me go
+- never let me go
 - red sky at morning
 - blood meridian
 - a little life
@@ -38,12 +38,12 @@ reading list
 
 ## sci-fi
 
-- read - the dispossessed
-- read - limitless
-- read - annihilation
-- read - snow crash
-- read - valuable humans in transit
-- read - the parable of the sower
+- the dispossessed
+- limitless
+- annihilation
+- snow crash
+- valuable humans in transit
+- the parable of the sower
 - the winds 12 quarters
 
 ## poetry
@@ -65,10 +65,10 @@ reading list
 
 ## tech & business
 
-- read - zero to one
-- read - genesis
-- read - principles of ai agents
-- read - hackers and painters
+- zero to one
+- genesis
+- principles of ai agents
+- hackers and painters
 - the lean startup
 - read - the tech republic
 - interviewing users

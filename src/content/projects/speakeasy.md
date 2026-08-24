@@ -17,7 +17,7 @@ images:
   - ../../assets/projects/speakeasy-3.png
 ---
 
-built for CalHacks. shoutout alon, kennice and alex. "bro its like an ide, with chatgpt in it" -alex tian discovers vibe coding 
+built for CalHacks with alon, kennice and alex.
 
 As college students, we've all been to lectures where the professor doesn't realize their audience is completely lost, where we leave the building with more questions than answers and feel confused and frustrated.
 
