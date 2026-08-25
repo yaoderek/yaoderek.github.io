@@ -325,7 +325,7 @@ test('a11y: dialog role + aria-label present; Esc closes top window', async () =
   target.remove();
 });
 
-test('startup opens the Finder and Notes on the README, side by side', async () => {
+test('startup stacks Notes over the Finder, with the greeting photo to the right', async () => {
   const target = document.createElement('div');
   document.body.appendChild(target);
   const app = mount(Desktop, {
@@ -340,16 +340,37 @@ test('startup opens the Finder and Notes on the README, side by side', async () 
   const notes = target.querySelector<HTMLElement>(
     '[role="dialog"][aria-label="README.txt"]'
   );
+  const photos = target.querySelector<HTMLElement>(
+    '[role="dialog"][aria-label="Photos"]'
+  );
   expect(finder).not.toBeNull();
   expect(notes).not.toBeNull();
+  expect(photos).not.toBeNull();
   // Notes opened on the README itself, not on some other note.
   expect(notes!.textContent).toContain('hi');
-  // Photos no longer greets anyone: the pair is the whole arrangement.
-  expect(target.querySelector('[role="dialog"][aria-label="Photos"]')).toBeNull();
-  // Side by side, with Notes to the right of the Finder.
-  expect(parseFloat(notes!.style.left)).toBeGreaterThan(
-    parseFloat(finder!.style.left)
+  // The fixture album has no photo called 'me', so the greeting falls back to
+  // the last picture in it.
+  expect(photos!.textContent).toContain('Taipei metro');
+
+  // Notes sits inside the Finder's footprint, covering the preview pane that
+  // would otherwise show the same README a second time.
+  const finderLeft = parseFloat(finder!.style.left);
+  const notesLeft = parseFloat(notes!.style.left);
+  expect(notesLeft).toBeGreaterThan(finderLeft);
+  expect(notesLeft + parseFloat(notes!.style.width)).toBeLessThanOrEqual(
+    finderLeft + parseFloat(finder!.style.width)
   );
+  expect(parseFloat(notes!.style.top)).toBeGreaterThan(
+    parseFloat(finder!.style.top)
+  );
+
+  // The photo sits off to the right, parked against the edge of the screen,
+  // and is sized to leave the pair room rather than claiming its usual share.
+  const photosLeft = parseFloat(photos!.style.left);
+  const photosWidth = parseFloat(photos!.style.width);
+  expect(photosLeft).toBeGreaterThan(notesLeft);
+  expect(photosLeft + photosWidth).toBe(window.innerWidth - 12);
+  expect(photosWidth).toBeLessThan(window.innerWidth * 0.55);
   // Dock marks open apps the way macOS does.
   expect(target.querySelector('.running-dot')).not.toBeNull();
 
@@ -424,7 +445,7 @@ test('a Photos window opened on a photo is sized to it, not to the app default',
 
   const photos = target.querySelector<HTMLElement>('[role="dialog"][aria-label="Photos"]');
   expect(photos).not.toBeNull();
-  // The greeting photo is 1600×1200, so the window is wider than it is tall —
+  // The photo is 1600×1200, so the window is wider than it is tall —
   // the app's default size (780×680) would be the other way round.
   const width = parseFloat(photos!.style.width);
   const height = parseFloat(photos!.style.height);
@@ -458,8 +479,8 @@ test('a deep-linked drawing opens in Photos, in the art album', async () => {
 test('Photos dock icon opens the Photos window on its albums', async () => {
   const target = document.createElement('div');
   document.body.appendChild(target);
-  // Photos never opens on startup, so the dock click is the only thing that
-  // can open it here.
+  // A deep link skips the greeting arrangement, so the dock click is the only
+  // thing that can open Photos here.
   const app = mount(Desktop, {
     target,
     props: { tree: lifeTree, initialPath: '/README.txt', showResume: false },

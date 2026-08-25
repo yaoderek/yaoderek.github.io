@@ -57,7 +57,9 @@
     {/if}
 
     {#if node.open?.app === 'photos'}
-      <button class="open" onclick={() => onopen(node.path)}>Open</button>
+      <button class="open" onclick={() => onopen(node.path)}>
+        Open in Photos
+      </button>
     {/if}
   </div>
 {/if}

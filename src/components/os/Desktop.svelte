@@ -23,7 +23,6 @@
     move,
     resize,
     topWindow,
-    MIN_W,
   } from '../../lib/os/windows';
   import Window from './Window.svelte';
   import MenuBar from './MenuBar.svelte';
@@ -150,13 +149,23 @@
   /** The note the desktop opens Notes on. */
   const GREETING_NOTE = 'readme';
 
-  // The startup pair: the space between the Finder and Notes, and the margin
-  // kept either side of them.
-  const GREETING_GAP = 16;
-  const GREETING_MARGIN = 12;
+  /** The picture the desktop greets a visitor with, from the life album. */
+  const GREETING_PHOTO = 'me';
 
-  /** Where and how big a window should open, when the caller has an opinion. */
-  type Frame = { x?: number; y?: number; w?: number; h?: number };
+  // The greeting photo shares the screen with two other windows, so it is sized
+  // as if the screen were this fraction of its real width.
+  const GREETING_PHOTO_SHARE = 0.55;
+
+  // Space between the greeting photo and the windows to its left, and the least
+  // room those windows keep from the left edge.
+  const GREETING_GAP = 16;
+
+  // How far below the Finder's title bar Notes sits at startup. Their right
+  // edges line up, so nothing of the preview pane shows past it.
+  const GREETING_DROP = 36;
+
+  /** Where a window should open, when the caller has an opinion. */
+  type Frame = { x?: number; y?: number };
 
   function viewport() {
     return { vw: window.innerWidth, vh: window.innerHeight };
@@ -226,8 +235,7 @@
    * `frame` overrides where and how big it opens (see openGreeting).
    */
   function openInFinder(selection: string, navigate = true, frame: Frame = {}) {
-    const w = frame.w ?? SIZES.finder.w;
-    const h = frame.h ?? SIZES.finder.h;
+    const { w, h } = SIZES.finder;
     const finderExists = wins.some((win) => win.app === 'finder');
     const vp = viewport();
     wins = open(
@@ -277,8 +285,8 @@
         title: note.title,
         path: note.path,
         props: { noteId: note.id },
-        w: frame.w ?? SIZES.notes.w,
-        h: frame.h ?? SIZES.notes.h,
+        w: SIZES.notes.w,
+        h: SIZES.notes.h,
         x: frame.x,
         y: frame.y,
       },
@@ -305,9 +313,14 @@
    *
    * `album` + `index` target one picture, and a window opened on a picture is
    * sized to it and parked against the right edge. A null album opens a new
-   * window on the album list and leaves an existing one where it is.
+   * window on the album list and leaves an existing one where it is. `size`
+   * overrides the size read off the picture (see openGreeting).
    */
-  function openPhotos(album: string | null, index: number | null) {
+  function openPhotos(
+    album: string | null,
+    index: number | null,
+    size: { w: number; h: number } | null = null
+  ) {
     if (albums.length === 0) return;
 
     const existing = wins.find((w) => w.app === 'photos');
@@ -325,7 +338,7 @@
 
     const vp = viewport();
     const photo = photoAt(albums, album, index);
-    const { w, h } = photo ? photoWindowSize(photo, vp) : SIZES.photos;
+    const { w, h } = size ?? (photo ? photoWindowSize(photo, vp) : SIZES.photos);
     wins = open(
       wins,
       {
@@ -346,39 +359,52 @@
   }
 
   /**
-   * The opening arrangement on a big screen: the Finder on the left with the
-   * README selected, and Notes open on that same README beside it.
+   * The opening arrangement on a big screen: the Finder with the README
+   * selected, Notes open on that same README stacked on top of it, and Photos
+   * on the greeting picture off to the right.
    *
-   * Both windows at their usual size need more width than a laptop screen has,
-   * so the pair is scaled down together until it fits and then centred. They
-   * only give up on sitting side by side when even the minimum widths won't.
+   * Notes covers the Finder's preview pane rather than sitting beside it, so
+   * the README isn't on screen twice. The Finder's columns still show down the
+   * left, the way a window stacked on another one leaves its edges visible.
+   * Photos parks against the right edge, so the other two slide as far left as
+   * the screen allows to keep clear of it. A life album without the greeting
+   * picture falls back to its last one.
    */
   function openGreeting() {
     const vp = viewport();
-    const room = vp.vw - 2 * GREETING_MARGIN - GREETING_GAP;
-    const wanted = SIZES.finder.w + SIZES.notes.w;
-    const scale = Math.min(1, room / wanted);
+    const photos = lifeAlbum?.items ?? [];
+    const found = photos.findIndex((photo) => photo.id === GREETING_PHOTO);
+    const index =
+      photos.length === 0 ? -1 : found >= 0 ? found : photos.length - 1;
+    const size =
+      index >= 0
+        ? photoWindowSize(photos[index], {
+            vw: vp.vw * GREETING_PHOTO_SHARE,
+            vh: vp.vh,
+          })
+        : null;
 
-    const finderW = Math.max(MIN_W, Math.round(SIZES.finder.w * scale));
-    const notesW = Math.max(MIN_W, Math.round(SIZES.notes.w * scale));
-    const pair = finderW + GREETING_GAP + notesW;
-
-    // Too narrow even at minimum width: let the window manager cascade them.
-    if (pair > vp.vw) {
-      openInFinder('/README.txt', false);
-      openNotes(GREETING_NOTE);
-      return;
-    }
-
-    const left = Math.round((vp.vw - pair) / 2);
-    const top = Math.round(Math.max(24, (vp.vh - SIZES.finder.h) * 0.42));
-
-    openInFinder('/README.txt', false, { x: left, y: top, w: finderW });
-    openNotes(GREETING_NOTE, {
-      x: left + finderW + GREETING_GAP,
-      y: top,
-      w: notesW,
+    openInFinder('/README.txt', false, {
+      x: size
+        ? Math.max(
+            GREETING_GAP,
+            vp.vw - size.w - PHOTOS_MARGIN - GREETING_GAP - SIZES.finder.w
+          )
+        : undefined,
     });
+
+    const finder = wins.find((win) => win.app === 'finder');
+    openNotes(
+      GREETING_NOTE,
+      finder
+        ? {
+            x: finder.x + finder.w - SIZES.notes.w,
+            y: finder.y + GREETING_DROP,
+          }
+        : {}
+    );
+
+    if (size) openPhotos('life', index, size);
   }
 
   /**
