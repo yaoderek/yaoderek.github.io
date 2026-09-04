@@ -1,12 +1,14 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import type { FSNode, NoteItem } from '../../lib/os/types';
+  import type { FSNode, IconKind, NoteItem } from '../../lib/os/types';
   import { findNode } from '../../lib/os/fs';
   import { noteList } from '../../lib/os/notes';
   import { photoAlbums } from '../../lib/os/photos';
+  import { experienceRoles } from '../../lib/os/calendar';
   import Icon from './Icon.svelte';
   import NotesWindow from './apps/NotesWindow.svelte';
   import PhotosWindow from './apps/PhotosWindow.svelte';
+  import CalendarWindow from './apps/CalendarWindow.svelte';
   import type { ComponentProps } from 'svelte';
 
   type Props = {
@@ -36,6 +38,9 @@
   // Notes are gathered the same way. The phone shows one note at a time, since
   // the Files view is already doing the job of the note list.
   const notes = $derived(noteList(tree));
+
+  // The roles Calendar draws, read off the tree the same way.
+  const roles = $derived(experienceRoles(tree));
 
   // Stack of FS paths; top of stack = current view.
   let stack = $state<string[]>(['/']);
@@ -133,10 +138,10 @@
     return null;
   });
 
-  // Children of the current folder.
+  // Children of the current folder, minus the ones that aren't files to browse.
   const folderChildren = $derived((): FSNode[] => {
     const folder = currentFolder();
-    return folder?.children ?? [];
+    return (folder?.children ?? []).filter((child) => !child.hidden);
   });
 
   // Parent name for back button label.
@@ -247,6 +252,13 @@
                 {reducedMotion}
                 compact={true}
               />
+            {:else if item.open.app === 'calendar'}
+              <CalendarWindow
+                {...item.open.props as ComponentProps<typeof CalendarWindow>}
+                {roles}
+                active={true}
+                compact={true}
+              />
             {/if}
           </div>
         {/if}
@@ -260,7 +272,7 @@
                 aria-label={node.name}
               >
                 <span class="file-icon">
-                  <Icon kind={node.icon as 'folder' | 'doc' | 'app' | 'image'} size={28} thumb={node.previewImage ?? (node.open?.props?.thumbUrl as string | undefined) ?? null} />
+                  <Icon kind={node.icon as IconKind} size={28} thumb={node.previewImage ?? (node.open?.props?.thumbUrl as string | undefined) ?? null} />
                 </span>
                 <span class="file-name">{node.name}</span>
                 <span class="file-chevron" aria-hidden="true">›</span>

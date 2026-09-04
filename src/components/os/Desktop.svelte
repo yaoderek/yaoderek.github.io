@@ -4,6 +4,7 @@
   import { findNode } from '../../lib/os/fs';
   import { noteList, noteOrFirst } from '../../lib/os/notes';
   import { photoAlbums, photoAt, photoWindowSize } from '../../lib/os/photos';
+  import { calendarIconUrl, experienceRoles } from '../../lib/os/calendar';
   import {
     pathForWin,
     urlToOpenPath,
@@ -28,17 +29,20 @@
   import MenuBar from './MenuBar.svelte';
   import Finder from './Finder.svelte';
   import Dock from './Dock.svelte';
+  import DesktopFile from './DesktopFile.svelte';
   import MobileFiles from './MobileFiles.svelte';
   import AboutWindow from './apps/AboutWindow.svelte';
   import DocWindow from './apps/DocWindow.svelte';
   import NotesWindow from './apps/NotesWindow.svelte';
   import PhotosWindow from './apps/PhotosWindow.svelte';
+  import CalendarWindow from './apps/CalendarWindow.svelte';
   import TrashWindow from './apps/TrashWindow.svelte';
 
   type Props = {
     tree: FSNode;
     initialPath?: string | null;
-    // showResume is accepted now for a stable page contract; used in Task 9.
+    // Whether public/resume.pdf exists: it puts the résumé on the desktop and
+    // in the dock.
     showResume: boolean;
     // When true, open a "file not found" doc window after mount (404 page).
     notFound?: boolean;
@@ -112,7 +116,7 @@
 
   // Live Finder selection, reported via onselect. Drives the URL when no
   // window with a public path is on top (docs/projects read inline).
-  let finderSelection = $state<string | null>('/README.txt');
+  let finderSelection = $state<string | null>(null);
 
   // Mobile breakpoint detection — reactive via matchMedia change listener.
   const mq =
@@ -138,6 +142,7 @@
     notes: { w: 820, h: 580 },
     doc: { w: 640, h: 560 },
     photos: { w: 780, h: 680 },
+    calendar: { w: 880, h: 560 },
     finder: { w: 960, h: 560 },
     about: { w: 420, h: 260 },
     trash: { w: 480, h: 320 },
@@ -147,7 +152,7 @@
   const PHOTOS_MARGIN = 12;
 
   /** The note the desktop opens Notes on. */
-  const GREETING_NOTE = 'readme';
+  const GREETING_NOTE = 'intro';
 
   /** The picture the desktop greets a visitor with, from the life album. */
   const GREETING_PHOTO = 'me';
@@ -179,6 +184,13 @@
   // The README and everything under /writing, gathered for the Notes app.
   const notes = $derived(noteList(tree));
 
+  // The roles the Calendar app puts on its timeline.
+  const roles = $derived(experienceRoles(tree));
+
+  // The dock's Calendar tile shows today's date, so it's drawn on mount rather
+  // than built with the site.
+  const calendarIcon = $derived(calendarIconUrl(new Date()));
+
   /**
    * Open (or focus) the appropriate window for a filesystem path.
    * - A node with an `open` spec launches that app.
@@ -204,6 +216,13 @@
       return;
     }
 
+    // The experience folder and every role in it belong to Calendar, which
+    // keeps a single window the same way.
+    if (node.open && node.open.app === 'calendar') {
+      openCalendar((node.open.props as { role?: string | null }).role ?? null);
+      return;
+    }
+
     if (node.open) {
       const { w, h } = SIZES[node.open.app];
       wins = open(
@@ -221,10 +240,11 @@
       return;
     }
 
-    // Folder or root -> single Finder window.
+    // Folder or root -> single Finder window. The root opens with nothing
+    // selected, the way a fresh Finder window does.
     const isFolder = node.kind === 'Folder' || node.path === '/';
     if (isFolder) {
-      openInFinder(node.path === '/' ? '/README.txt' : node.path, node.path !== '/');
+      openInFinder(node.path === '/' ? null : node.path, node.path !== '/');
     }
   }
 
@@ -232,9 +252,13 @@
    * Open (or focus) the single Finder window with `selection` selected.
    * When the Finder already exists, `navigate` drives its selection via the
    * one-shot signal (false = just focus, e.g. clicking the Finder dock icon).
-   * `frame` overrides where and how big it opens (see openGreeting).
+   * `frame` overrides where it opens (see openGreeting).
    */
-  function openInFinder(selection: string, navigate = true, frame: Frame = {}) {
+  function openInFinder(
+    selection: string | null,
+    navigate = true,
+    frame: Frame = {}
+  ) {
     const { w, h } = SIZES.finder;
     const finderExists = wins.some((win) => win.app === 'finder');
     const vp = viewport();
@@ -253,7 +277,8 @@
       },
       vp
     );
-    if (finderExists && navigate) finderNavigateTo = selection;
+    // A null selection is "no opinion", so it never drives the signal.
+    if (finderExists && navigate && selection) finderNavigateTo = selection;
   }
 
   /**
@@ -359,16 +384,51 @@
   }
 
   /**
-   * The opening arrangement on a big screen: the Finder with the README
-   * selected, Notes open on that same README stacked on top of it, and Photos
-   * on the greeting picture off to the right.
+   * Open (or focus) the single Calendar window, on a role or on the timeline
+   * as a whole. Like Photos, it re-targets the window that's already up rather
+   * than stacking another one.
+   */
+  function openCalendar(roleId: string | null) {
+    if (roles.length === 0) return;
+
+    const existing = wins.find((win) => win.app === 'calendar');
+    if (existing) {
+      wins = focus(
+        wins.map((win) =>
+          win.id === existing.id
+            ? { ...win, minimized: false, props: { ...win.props, role: roleId } }
+            : win
+        ),
+        existing.id
+      );
+      return;
+    }
+
+    wins = open(
+      wins,
+      {
+        app: 'calendar',
+        title: 'Calendar',
+        // Internal: one window covers every role, so it owns no URL.
+        path: '/__calendar__',
+        props: { roles, role: roleId },
+        w: SIZES.calendar.w,
+        h: SIZES.calendar.h,
+      },
+      viewport()
+    );
+  }
+
+  /**
+   * The opening arrangement on a big screen: the Finder at the root, Notes
+   * open on the introduction stacked on top of it, and Photos on the greeting
+   * picture off to the right.
    *
-   * Notes covers the Finder's preview pane rather than sitting beside it, so
-   * the README isn't on screen twice. The Finder's columns still show down the
-   * left, the way a window stacked on another one leaves its edges visible.
-   * Photos parks against the right edge, so the other two slide as far left as
-   * the screen allows to keep clear of it. A life album without the greeting
-   * picture falls back to its last one.
+   * Notes sits inside the Finder's footprint rather than beside it, so the
+   * Finder's columns still show down the left, the way a window stacked on
+   * another one leaves its edges visible. Photos parks against the right edge,
+   * so the other two slide as far left as the screen allows to keep clear of
+   * it. A life album without the greeting picture falls back to its last one.
    */
   function openGreeting() {
     const vp = viewport();
@@ -384,7 +444,7 @@
           })
         : null;
 
-    openInFinder('/README.txt', false, {
+    openInFinder(null, false, {
       x: size
         ? Math.max(
             GREETING_GAP,
@@ -409,11 +469,22 @@
 
   /**
    * Mobile has no windows either, so the Notes dock icon drills the Files view
-   * into the writing folder and lets the reader pick from there.
+   * straight to the introduction — the note the desktop dock icon lands on too,
+   * and the one place the phone can reach it now that it isn't a listed file.
    */
-  function openWritingOnMobile() {
-    mobileNavigateTo = '/writing';
-    onMobileNavigate('/writing');
+  function openIntroOnMobile() {
+    mobileNavigateTo = '/intro';
+    onMobileNavigate('/intro');
+  }
+
+  /**
+   * Mobile has no windows, so the Calendar dock icon drills the Files view
+   * into the newest role, which is the timeline itself rather than a listing.
+   */
+  function openExperienceOnMobile() {
+    const path = roles[0] ? `/experience/${roles[0].id}` : '/experience';
+    mobileNavigateTo = path;
+    onMobileNavigate(path);
   }
 
   /**
@@ -428,6 +499,11 @@
         : `/life/${photos[Math.floor(Math.random() * photos.length)].id}`;
     mobileNavigateTo = path;
     onMobileNavigate(path);
+  }
+
+  /** The résumé is a real PDF, so it opens in the browser's own viewer. */
+  function openResume() {
+    window.open(withBase('/resume.pdf', BASE), '_blank', 'noopener');
   }
 
   /** Open the About window (no filesystem node needed). */
@@ -632,7 +708,7 @@
       label: 'Notes',
       iconUrl: dockIcons.notes,
       running: openApps.has('notes'),
-      action: () => (isMobile ? openWritingOnMobile() : openNotes(null)),
+      action: () => (isMobile ? openIntroOnMobile() : openNotes(null)),
     },
     {
       id: 'photos',
@@ -642,12 +718,19 @@
       action: () =>
         isMobile ? openRandomPhotoOnMobile() : openPhotos(null, null),
     },
+    {
+      id: 'calendar',
+      label: 'Calendar',
+      iconUrl: calendarIcon,
+      running: openApps.has('calendar'),
+      action: () => (isMobile ? openExperienceOnMobile() : openCalendar(null)),
+    },
     ...(showResume
       ? [{
           id: 'resume',
           label: 'Résumé',
           iconUrl: dockIcons.preview,
-          action: () => window.open(withBase('/resume.pdf', BASE), '_blank', 'noopener'),
+          action: openResume,
         }]
       : []),
     {
@@ -719,12 +802,19 @@
   <Dock
     items={dockItems}
     trailing={dockTrailing}
-    appIcons={dockIcons}
+    appIcons={{ ...dockIcons, calendar: calendarIcon }}
     minimized={wins.filter((w) => w.minimized)}
     onrestore={(id) => (wins = restore(wins, id))}
     {reducedMotion}
     {isMobile}
   />
+
+  <!-- Sits before the windows layer so an open window covers it, like a Mac. -->
+  {#if !isMobile && showResume}
+    <div class="desktop-files">
+      <DesktopFile name="resume" iconUrl={dockIcons.preview} onopen={openResume} />
+    </div>
+  {/if}
 
   {#if isMobile}
     <div id="main-content" class="mobile-layer">
@@ -791,6 +881,11 @@
               active={win.id === topId}
               {reducedMotion}
             />
+          {:else if win.app === 'calendar'}
+            <CalendarWindow
+              {...win.props as ComponentProps<typeof CalendarWindow>}
+              active={win.id === topId}
+            />
           {:else if win.app === 'trash'}
             <TrashWindow />
           {/if}
@@ -832,6 +927,18 @@
     background-position: center;
     background-size: cover;
     background-repeat: no-repeat;
+  }
+
+  /* Files on the desktop: top right, below the menu bar, the way macOS drops
+     them. No z-index, so every window (z >= 1) stacks above them. */
+  .desktop-files {
+    position: absolute;
+    top: calc(var(--menubar-h, 28px) + 14px);
+    right: 18px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
   }
 
   /* Desktop windows layer: zero-size passthrough container (anchor target only) */

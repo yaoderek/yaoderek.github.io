@@ -29,17 +29,19 @@ const fixtureTree: FSNode = {
   icon: 'folder',
   children: [
     {
-      name: 'README.txt',
-      path: '/README.txt',
+      // The introduction: reachable from the dock, never listed as a file.
+      name: 'hey',
+      path: '/intro',
       kind: 'Plain Text',
       icon: 'doc',
+      hidden: true,
       open: {
         app: 'notes',
         props: {
           note: {
-            id: 'readme',
-            path: '/README.txt',
-            title: 'README.txt',
+            id: 'intro',
+            path: '/intro',
+            title: 'hey',
             created: '2025-01-01',
             html: '<p>hi</p>',
             snippet: 'hi',

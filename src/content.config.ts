@@ -23,6 +23,21 @@ const writing = defineCollection({
   schema: z.object({ title: z.string(), created: z.coerce.date() }),
 });
 
+// Roles the Calendar app draws on its timeline. No `end` means still running.
+const experience = defineCollection({
+  loader: file('./src/content/experience.yaml'),
+  schema: z.object({
+    id: z.string(),
+    org: z.string(),
+    role: z.string(),
+    note: z.string().optional(),
+    calendar: z.enum(['work', 'research', 'athletics']),
+    start: z.coerce.date(),
+    end: z.coerce.date().optional(),
+    highlights: z.array(z.string()),
+  }),
+});
+
 const pieces = (name: string) =>
   defineCollection({
     loader: file(`./src/content/${name}.yaml`),
@@ -36,4 +51,10 @@ const pieces = (name: string) =>
       }),
   });
 
-export const collections = { projects, writing, art: pieces('art'), life: pieces('life') };
+export const collections = {
+  projects,
+  writing,
+  experience,
+  art: pieces('art'),
+  life: pieces('life'),
+};

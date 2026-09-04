@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { FSNode } from '../../lib/os/types';
+  import type { FSNode, IconKind } from '../../lib/os/types';
   import { findNode } from '../../lib/os/fs';
   import { formatDate } from '../../lib/os/format';
   import { onMount, tick } from 'svelte';
@@ -115,9 +115,9 @@
     }
   }
 
-  /** Children of a folder node (empty array if none). */
+  /** Children of a folder node, minus the ones that aren't files to browse. */
   function childrenOf(node: FSNode): FSNode[] {
-    return node.children ?? [];
+    return (node.children ?? []).filter((child) => !child.hidden);
   }
 
   // ---- column auto-scroll ----------------------------------------------
@@ -264,7 +264,7 @@
               ondblclick={() => activate(node)}
             >
               <Icon
-                kind={node.icon as 'folder' | 'doc' | 'app' | 'image'}
+                kind={node.icon as IconKind}
                 size={16}
                 thumb={node.previewImage ?? null}
               />
@@ -307,7 +307,7 @@
             >
               <td class="col-name">
                 <Icon
-                  kind={node.icon as 'folder' | 'doc' | 'app' | 'image'}
+                  kind={node.icon as IconKind}
                   size={16}
                   thumb={node.previewImage ?? null}
                 />

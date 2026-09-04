@@ -7,9 +7,9 @@ import { stripHtml } from './format';
 import { buildTree } from './fs';
 
 /**
- * README content, authored as real HTML (injected via {@html} by the Doc app).
+ * The introduction, authored as real HTML (injected via {@html} by Notes).
  */
-const README_HTML = `<p>Hi, I'm Derek.</p>
+const INTRO_HTML = `<p>I'm Derek.</p>
 <p>I'm working as a member of technical staff at Contour (backed by Lightspeed, Chemistry) this summer.</p>
 <p>I'm a student at UW studying art and computer science. I've worked with Oracle on supply chain resilience and optimization, and I'm currently building agentic research systems with the Denolle and GAIA labs at UW.</p>
 <dl class="contact">
@@ -19,7 +19,7 @@ const README_HTML = `<p>Hi, I'm Derek.</p>
   <div><dt>linkedin</dt><dd><a href="https://linkedin.com/in/yaoderek">linkedin.com/in/yaoderek</a></dd></div>
 </dl>`;
 
-const README_CREATED = '2026-07-20';
+const INTRO_CREATED = '2026-07-20';
 
 /** Convert a Date | string to an ISO YYYY-MM-DD string. */
 function isoDate(value: Date | string): string {
@@ -48,12 +48,14 @@ async function toUrl(src: ImageMetadata): Promise<string> {
 export async function getTreeInput(
   rendered: Record<string, string>
 ): Promise<TreeInput> {
-  const [projectsRaw, writingRaw, artRaw, lifeRaw] = await Promise.all([
-    getCollection('projects'),
-    getCollection('writing'),
-    getCollection('art'),
-    getCollection('life'),
-  ]);
+  const [projectsRaw, writingRaw, experienceRaw, artRaw, lifeRaw] =
+    await Promise.all([
+      getCollection('projects'),
+      getCollection('writing'),
+      getCollection('experience'),
+      getCollection('art'),
+      getCollection('life'),
+    ]);
 
   const projectsSorted = [...projectsRaw].sort(
     (a, b) => b.data.created.getTime() - a.data.created.getTime()
@@ -95,6 +97,23 @@ export async function getTreeInput(
     };
   });
 
+  // Newest role first, the order the Calendar app lists them in.
+  const experience: TreeInput['experience'] = [...experienceRaw]
+    .sort((a, b) => b.data.start.getTime() - a.data.start.getTime())
+    .map((entry) => {
+      const role: TreeInput['experience'][number] = {
+        id: entry.data.id,
+        org: entry.data.org,
+        role: entry.data.role,
+        calendar: entry.data.calendar,
+        start: isoDate(entry.data.start),
+        highlights: entry.data.highlights,
+      };
+      if (entry.data.note !== undefined) role.note = entry.data.note;
+      if (entry.data.end !== undefined) role.end = isoDate(entry.data.end);
+      return role;
+    });
+
   const mapPieces = (
     pieces: typeof artRaw
   ): Promise<TreeInput['art']> =>
@@ -124,9 +143,10 @@ export async function getTreeInput(
   ]);
 
   return {
-    readme: { text: README_HTML, created: README_CREATED },
+    intro: { text: INTRO_HTML, created: INTRO_CREATED },
     projects,
     writing,
+    experience,
     art,
     life,
   };

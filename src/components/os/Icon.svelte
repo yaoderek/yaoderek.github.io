@@ -1,8 +1,10 @@
 <script lang="ts">
+  import type { IconKind } from '../../lib/os/types';
+
   // Inline SVG icon set for Finder rows and preview. Hand-drawn-simple,
   // flat fills, 1px strokes — consistent across kinds.
   type Props = {
-    kind: 'folder' | 'doc' | 'app' | 'image';
+    kind: IconKind;
     size?: number;
     thumb?: string | null;
   };
@@ -74,6 +76,21 @@
       <circle cx="8" cy="8" r="1" fill="#3a3a3c" />
     </svg>
   {/if}
+{:else if kind === 'calendar'}
+  <svg
+    class="icon"
+    width={size}
+    height={size}
+    viewBox="0 0 16 16"
+    aria-hidden="true"
+    focusable="false"
+  >
+    <!-- a torn-off calendar page: red band, blank day below -->
+    <rect x="2" y="2.5" width="12" height="11" rx="1.6" fill="#ffffff" stroke="#b9b9be" stroke-width="0.75" />
+    <path d="M2 4.1 A1.6 1.6 0 0 1 3.6 2.5 H12.4 A1.6 1.6 0 0 1 14 4.1 V5.5 H2 Z" fill="#e8524a" />
+    <rect x="4.5" y="7.5" width="7" height="1" rx="0.5" fill="#d8d8dd" />
+    <rect x="4.5" y="10" width="4.5" height="1" rx="0.5" fill="#d8d8dd" />
+  </svg>
 {:else if kind === 'image'}
   {#if thumb}
     <span class="tile" style:width={`${size}px`} style:height={`${size}px`} style:border-radius="2px">

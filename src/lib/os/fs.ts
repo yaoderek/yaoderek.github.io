@@ -1,36 +1,46 @@
-import type { FSNode, NoteItem, PhotoItem, TreeInput } from './types';
-import { formatDate, wordCount, firstSentence, stripHtml } from './format';
+import type {
+  ExperienceItem,
+  FSNode,
+  NoteItem,
+  PhotoItem,
+  TreeInput,
+} from './types';
+import {
+  formatDate,
+  formatMonthRange,
+  wordCount,
+  firstSentence,
+  stripHtml,
+} from './format';
 
 /**
  * Build the Finder file-system tree from collection data.
  * Root node: name "derek's mac", path "/", kind "Folder".
- * Child order: README.txt, projects, writing, art, life.
+ * Child order: projects, writing, art, life.
+ *
+ * The introduction rides along as a hidden child: it's a note, not a file, so
+ * the Finder doesn't list it, but the Notes app still reads it off the tree.
  */
 export function buildTree(input: TreeInput): FSNode {
-  const readmeMeta: [string, string][] = [
-    ['Kind', 'Plain Text'],
-    ['Created', formatDate(input.readme.created)],
-  ];
-  const readmeText = stripHtml(input.readme.text);
-  const readmeNote: NoteItem = {
-    id: 'readme',
-    path: '/README.txt',
-    title: 'README.txt',
-    created: input.readme.created,
-    html: input.readme.text,
-    snippet: firstSentence(readmeText),
+  const introText = stripHtml(input.intro.text);
+  const introNote: NoteItem = {
+    id: 'intro',
+    path: '/intro',
+    title: 'hey',
+    created: input.intro.created,
+    html: input.intro.text,
+    snippet: firstSentence(introText),
     // The introduction sits at the top of the list, however old it is.
     pinned: true,
   };
-  const readmeNode: FSNode = {
-    name: 'README.txt',
-    path: '/README.txt',
+  const introNode: FSNode = {
+    name: 'hey',
+    path: '/intro',
     kind: 'Plain Text',
     icon: 'doc',
-    created: input.readme.created,
-    meta: readmeMeta,
-    blurb: readmeText,
-    open: { app: 'notes', props: { note: readmeNote } },
+    created: input.intro.created,
+    hidden: true,
+    open: { app: 'notes', props: { note: introNote } },
   };
 
   const projectsFolder: FSNode = {
@@ -110,9 +120,10 @@ export function buildTree(input: TreeInput): FSNode {
     kind: 'Folder',
     icon: 'folder',
     children: [
-      readmeNode,
+      introNode,
       projectsFolder,
       writingFolder,
+      buildExperienceFolder(input.experience),
       buildAlbumFolder('art', input.art),
       buildAlbumFolder('life', input.life),
     ],
@@ -172,6 +183,43 @@ function escapeHtml(value: string): string {
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;');
+}
+
+/**
+ * The roles folder. Like the picture folders, it belongs to an app rather than
+ * to the Finder: opening it or any role inside it launches Calendar.
+ *
+ * The folder node carries every role so the app reads them once, which keeps
+ * each role node down to its own id.
+ */
+function buildExperienceFolder(roles: ExperienceItem[]): FSNode {
+  return {
+    name: 'experience',
+    path: '/experience',
+    kind: 'Folder',
+    icon: 'folder',
+    open: { app: 'calendar', props: { roles, role: null } },
+    children: roles.map((role) => {
+      const meta: [string, string][] = [
+        ['Kind', 'Calendar Event'],
+        ['Role', role.role],
+        ['When', formatMonthRange(role.start, role.end)],
+        // The calendar reads as its name here, the way Calendar titles it.
+        ['Calendar', role.calendar[0].toUpperCase() + role.calendar.slice(1)],
+      ];
+      return {
+        // The file a calendar event exports as, which is what this stands in for.
+        name: `${role.id}.ics`,
+        path: `/experience/${role.id}`,
+        kind: 'Calendar Event',
+        icon: 'calendar',
+        created: role.start,
+        meta,
+        blurb: role.highlights[0] ?? '',
+        open: { app: 'calendar', props: { role: role.id } },
+      } satisfies FSNode;
+    }),
+  };
 }
 
 /**

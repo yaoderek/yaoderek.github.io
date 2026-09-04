@@ -81,6 +81,11 @@ describe('urlToOpenPath', () => {
     expect(urlToOpenPath('/life')).toBe('/life');
   });
 
+  it('maps /experience and /experience/<id> to their node paths', () => {
+    expect(urlToOpenPath('/experience')).toBe('/experience');
+    expect(urlToOpenPath('/experience/contour')).toBe('/experience/contour');
+  });
+
   it('strips a trailing slash before matching', () => {
     expect(urlToOpenPath('/projects/speakeasy/')).toBe('/projects/speakeasy');
   });
@@ -141,6 +146,10 @@ describe('fsPathToUrl', () => {
 
   it('maps "/life" to "/life" (section folder)', () => {
     expect(fsPathToUrl('/life')).toBe('/life');
+  });
+
+  it('maps "/experience/contour" through (experience item)', () => {
+    expect(fsPathToUrl('/experience/contour')).toBe('/experience/contour');
   });
 });
 

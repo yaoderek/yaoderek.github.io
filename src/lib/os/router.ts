@@ -6,10 +6,16 @@
  */
 
 /** Public section prefixes that appear in URLs. */
-const SECTIONS = ['projects', 'writing', 'art', 'life'] as const;
+const SECTIONS = ['projects', 'writing', 'experience', 'art', 'life'] as const;
 
 /** Sections that support deep-linked item URLs (/<section>/<id>). */
-const ITEM_SECTIONS = new Set(['projects', 'writing', 'art', 'life']);
+const ITEM_SECTIONS = new Set([
+  'projects',
+  'writing',
+  'experience',
+  'art',
+  'life',
+]);
 
 /**
  * The URL path that represents a given top window.

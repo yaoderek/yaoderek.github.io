@@ -1,3 +1,9 @@
+# The first piece is the album's cover in the Photos app, so it leads the list.
+- id: art-07
+  title: Untitled 7
+  created: 2025-01-01
+  medium: digital
+  image: ../assets/art/art-07.png
 - id: vase-study
   title: Vase study
   created: 2025-01-01
@@ -23,11 +29,6 @@
   created: 2025-01-01
   medium: digital
   image: ../assets/art/art-06.png
-- id: art-07
-  title: Untitled 7
-  created: 2025-01-01
-  medium: digital
-  image: ../assets/art/art-07.png
 - id: art-08
   title: Untitled 8
   created: 2025-01-01

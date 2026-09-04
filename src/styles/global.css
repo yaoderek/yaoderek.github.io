@@ -42,6 +42,14 @@
   --note-sel-idle: rgba(0, 0, 0, 0.06);
   --note-accent: #e6b64c;
   --note-field: rgba(0, 0, 0, 0.05);
+
+  /* Calendar app: one colour per named calendar, plus today's line */
+  --cal-work: #2f7ee0;
+  --cal-research: #8557d3;
+  --cal-athletics: #12946f;
+  --cal-today: #e8524a;
+  --cal-grid: rgba(0, 0, 0, 0.06);
+  --cal-sidebar: #f6f6f8;
 }
 
 /* macOS dark register — applied as a class on the desktop root. */
@@ -72,6 +80,12 @@
   --note-sel-idle: rgba(255, 255, 255, 0.08);
   --note-accent: #e6b64c;
   --note-field: rgba(255, 255, 255, 0.08);
+  --cal-work: #4a97f0;
+  --cal-research: #a07ce6;
+  --cal-athletics: #2fb98f;
+  --cal-today: #ff6b60;
+  --cal-grid: rgba(255, 255, 255, 0.1);
+  --cal-sidebar: #232325;
 }
 
 * { box-sizing: border-box; }

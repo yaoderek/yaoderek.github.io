@@ -206,7 +206,7 @@
   <!-- Derek Yao (direct button) -->
   <button
     class="menu-title owner-btn"
-    onclick={() => { onopenpath('/README.txt'); }}
+    onclick={() => { onopenpath('/intro'); }}
   >Derek Yao</button>
 
   {#if !isMobile}

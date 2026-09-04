@@ -23,7 +23,8 @@ beforeAll(() => {
   }
 });
 
-// Fixture with a README carrying meta + blurb so the preview has known text.
+// Fixture with a project carrying meta + blurb so the preview has known text,
+// and the hidden introduction the Notes app reads off the tree.
 const tree: FSNode = {
   name: "derek's mac",
   path: '/',
@@ -31,22 +32,21 @@ const tree: FSNode = {
   icon: 'folder',
   children: [
     {
-      name: 'README.txt',
-      path: '/README.txt',
+      name: 'hey',
+      path: '/intro',
       kind: 'Plain Text',
       icon: 'doc',
-      meta: [['Kind', 'Plain Text']],
-      blurb: 'Hi, I am Derek.',
+      hidden: true,
       open: {
         app: 'notes',
         props: {
           note: {
-            id: 'readme',
-            path: '/README.txt',
-            title: 'README.txt',
+            id: 'intro',
+            path: '/intro',
+            title: 'hey',
             created: '2025-01-01',
-            html: '<p>Hi, I am Derek.</p>',
-            snippet: 'Hi, I am Derek.',
+            html: '<p>I am Derek.</p>',
+            snippet: 'I am Derek.',
             pinned: true,
           },
         },
@@ -89,7 +89,7 @@ const tree: FSNode = {
   ],
 };
 
-test('mounting Desktop pre-selects README.txt and shows its preview', async () => {
+test('mounting Desktop opens the Finder at the root, hidden files aside', async () => {
   const target = document.createElement('div');
   document.body.appendChild(target);
   const app = mount(Desktop, {
@@ -98,12 +98,14 @@ test('mounting Desktop pre-selects README.txt and shows its preview', async () =
   });
   await new Promise((r) => setTimeout(r, 50)); // onMount + microtasks
 
-  const text = target.textContent ?? '';
-  // README is a row AND the preview column name; its blurb only appears in preview.
-  expect(text).toContain('README.txt');
-  expect(text).toContain('Hi, I am Derek.');
-  // Path bar shows root.
+  const finder = target.querySelector('[role="dialog"][aria-label="derek\'s mac"]');
+  expect(finder).not.toBeNull();
+  const text = finder!.textContent ?? '';
+  // The root's folders, and the path bar naming the root itself.
+  expect(text).toContain('projects');
   expect(text).toContain("derek's mac");
+  // The introduction belongs to Notes; the Finder doesn't list it.
+  expect(text).not.toContain('hey');
 
   unmount(app);
   target.remove();

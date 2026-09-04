@@ -1,10 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import { buildTree, findNode } from './fs';
-import type { NoteItem, TreeInput } from './types';
+import type { ExperienceItem, NoteItem, TreeInput } from './types';
 
 const fixture: TreeInput = {
-  readme: {
-    text: '<p>Hi, I\'m Derek.</p><p>I study art &amp; CS.</p>',
+  intro: {
+    text: '<p>I\'m Derek.</p><p>I study art &amp; CS.</p>',
     created: '2025-01-01',
   },
   projects: [
@@ -30,6 +30,26 @@ const fixture: TreeInput = {
       created: '2024-03-15',
       bodyHtml: '<p>Design is intention made visible.</p>',
       bodyText: 'Design is intention made visible. Every choice communicates something.',
+    },
+  ],
+  experience: [
+    {
+      id: 'contour',
+      org: 'Contour',
+      role: 'Software engineering intern',
+      note: 'employee #5',
+      calendar: 'work',
+      start: '2026-06-01',
+      highlights: ['Shipped the Linear sync.', 'Scaled the meeting bots.'],
+    },
+    {
+      id: 'oracle',
+      org: 'Oracle',
+      role: 'Product manager, contract',
+      calendar: 'work',
+      start: '2025-12-01',
+      end: '2026-04-30',
+      highlights: ['Advised on agent adoption.'],
     },
   ],
   art: [
@@ -65,41 +85,32 @@ describe('buildTree', () => {
     expect(root.kind).toBe('Folder');
   });
 
-  it('root children names are exactly [README.txt, projects, writing, art, life] in order', () => {
-    const names = root.children!.map((c) => c.name);
-    expect(names).toEqual(['README.txt', 'projects', 'writing', 'art', 'life']);
+  it('the five folders are the only children the Finder can browse', () => {
+    const visible = root
+      .children!.filter((c) => !c.hidden)
+      .map((c) => c.name);
+    expect(visible).toEqual(['projects', 'writing', 'experience', 'art', 'life']);
   });
 
-  it('README node has correct kind and open', () => {
-    const readme = root.children!.find((c) => c.name === 'README.txt')!;
-    expect(readme.kind).toBe('Plain Text');
-    expect(readme.path).toBe('/README.txt');
-    expect(readme.open?.app).toBe('notes');
-    const note = readme.open?.props.note as NoteItem;
-    expect(note.id).toBe('readme');
-    expect(note.title).toBe('README.txt');
-    expect(note.path).toBe('/README.txt');
+  it('carries the intro as a hidden note, pinned and titled "hey"', () => {
+    const intro = root.children!.find((c) => c.path === '/intro')!;
+    expect(intro.hidden).toBe(true);
+    expect(intro.kind).toBe('Plain Text');
+    expect(intro.open?.app).toBe('notes');
+    const note = intro.open?.props.note as NoteItem;
+    expect(note.id).toBe('intro');
+    expect(note.title).toBe('hey');
+    expect(note.path).toBe('/intro');
     // The introduction leads the list regardless of its date.
     expect(note.pinned).toBe(true);
   });
 
-  it('README node meta is [["Kind","Plain Text"],["Created",<formatted date>]]', () => {
-    const readme = root.children!.find((c) => c.name === 'README.txt')!;
-    const meta = readme.meta!;
-    expect(meta).toBeDefined();
-    expect(meta[0]).toEqual(['Kind', 'Plain Text']);
-    expect(meta[1][0]).toBe('Created');
-    // fixture created = '2025-01-01' → formatDate → 'Jan 1, 2025'
-    expect(meta[1][1]).toBe('Jan 1, 2025');
-    expect(meta.length).toBe(2);
-  });
-
-  it('README node blurb is plain-text with HTML stripped, entities decoded, whitespace collapsed', () => {
-    const readme = root.children!.find((c) => c.name === 'README.txt')!;
-    expect(readme.blurb).toBeDefined();
-    expect(readme.blurb).toContain("Hi, I'm Derek.");
-    expect(readme.blurb).toContain('I study art & CS.');
-    expect(readme.blurb).not.toMatch(/<[^>]+>/); // no HTML tags
+  it("the intro note's snippet is plain text, entities decoded, tags stripped", () => {
+    const intro = root.children!.find((c) => c.path === '/intro')!;
+    const note = intro.open?.props.note as NoteItem;
+    expect(note.html).toContain("<p>I'm Derek.</p>");
+    expect(note.snippet).toContain("I'm Derek.");
+    expect(note.snippet).not.toMatch(/<[^>]+>/); // no HTML tags
   });
 
   it('projects folder node is a Folder with icon folder', () => {
@@ -205,6 +216,37 @@ describe('buildTree', () => {
   it('project node keeps its thumbnail for the Finder icon', () => {
     const speakeasy = findNode(root, '/projects/speakeasy')!;
     expect(speakeasy.previewImage).toBe('/images/speakeasy-thumb.png');
+  });
+
+  it('experience folder hands the whole timeline to Calendar', () => {
+    const folder = findNode(root, '/experience')!;
+    expect(folder.kind).toBe('Folder');
+    expect(folder.open?.app).toBe('calendar');
+    const roles = folder.open?.props.roles as ExperienceItem[];
+    expect(roles.map((r) => r.id)).toEqual(['contour', 'oracle']);
+    expect(folder.children!.map((c) => c.name)).toEqual([
+      'contour.ics',
+      'oracle.ics',
+    ]);
+  });
+
+  it('a role node opens Calendar on itself and reads as an event', () => {
+    const contour = findNode(root, '/experience/contour')!;
+    expect(contour.kind).toBe('Calendar Event');
+    expect(contour.icon).toBe('calendar');
+    expect(contour.created).toBe('2026-06-01');
+    expect(contour.open?.app).toBe('calendar');
+    expect(contour.open?.props.role).toBe('contour');
+    // The role carries only its id: the folder above it holds the timeline.
+    expect(contour.open?.props.roles).toBeUndefined();
+    expect(contour.blurb).toBe('Shipped the Linear sync.');
+  });
+
+  it('a running role reads as "Present", a finished one as its last month', () => {
+    const when = (path: string) =>
+      findNode(root, path)!.meta!.find(([label]) => label === 'When')![1];
+    expect(when('/experience/contour')).toBe('Jun 2026 – Present');
+    expect(when('/experience/oracle')).toBe('Dec 2025 – Apr 2026');
   });
 
   it('writing node has kind "Plain Text" with correct meta', () => {

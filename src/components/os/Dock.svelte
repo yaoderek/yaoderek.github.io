@@ -80,6 +80,7 @@
       case 'notes': return appIcons.notes;
       case 'doc': return appIcons.notes;
       case 'photos': return appIcons.photos;
+      case 'calendar': return appIcons.calendar;
       default: return appIcons.notes;
     }
   }

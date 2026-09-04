@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { FSNode, NoteItem } from '../../lib/os/types';
+  import type { FSNode, IconKind, NoteItem } from '../../lib/os/types';
   import Icon from './Icon.svelte';
   import InlineDoc from './InlineDoc.svelte';
 
@@ -10,7 +10,7 @@
 
   let { node, onopen }: Props = $props();
 
-  const iconKind = $derived(node.icon as 'folder' | 'doc' | 'app' | 'image');
+  const iconKind = $derived(node.icon as IconKind);
 </script>
 
 {#if node.open?.app === 'notes'}
@@ -59,6 +59,10 @@
     {#if node.open?.app === 'photos'}
       <button class="open" onclick={() => onopen(node.path)}>
         Open in Photos
+      </button>
+    {:else if node.open?.app === 'calendar'}
+      <button class="open" onclick={() => onopen(node.path)}>
+        Open in Calendar
       </button>
     {/if}
   </div>

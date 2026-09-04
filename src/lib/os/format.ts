@@ -12,6 +12,23 @@ export function formatDate(iso: string): string {
   }).format(date);
 }
 
+/** Format an ISO date string as its month and year, "Jun 2026". */
+export function formatMonth(iso: string): string {
+  const [y, m] = iso.split('-').map(Number);
+  return new Intl.DateTimeFormat('en-US', {
+    month: 'short',
+    year: 'numeric',
+  }).format(new Date(y, m - 1, 1));
+}
+
+/**
+ * A run of months, "Dec 2025 – Apr 2026". A missing end date reads as
+ * "Present", the way a role that's still running does on a résumé.
+ */
+export function formatMonthRange(start: string, end?: string): string {
+  return `${formatMonth(start)} – ${end ? formatMonth(end) : 'Present'}`;
+}
+
 /**
  * Count words in a text string (whitespace-delimited tokens).
  */

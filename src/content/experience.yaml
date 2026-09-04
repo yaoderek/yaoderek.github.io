@@ -1,0 +1,54 @@
+# Roles, newest first. Leaving `end` out means the role is still running, which
+# is what draws a bar to today's line in the Calendar app.
+# `calendar` groups roles the way named calendars group events in Calendar.
+- id: contour
+  org: Contour
+  role: Software engineering intern
+  # Quoted: an unquoted # would start a YAML comment.
+  note: 'employee #5, backed by Lightspeed'
+  calendar: work
+  start: 2026-06-01
+  highlights:
+    - Shipped real-time bidirectional Linear sync processing 20K+ task statuses across 12+ live customer deployments
+    - Scaled meeting bot infra to 120K webhooks/hr with concurrency, turn-level streaming, and calendar syncs
+    - Improved Memgraph retrieval latency 7.8x while preserving 94% recall through query and hydration optimization
+    - Automated FDE template creation by building an agent-native spreadsheet editor, XML parser, and tool interface
+- id: denolle-lab
+  org: UW Denolle Lab
+  role: Undergraduate researcher
+  calendar: research
+  start: 2025-12-01
+  highlights:
+    - Built distributed CNN inference system for seismic event detection across sparse Alaskan edge sensor network
+    - Shrank memory footprint 92% through distillation and INT8 quantization, enabling inference on edge hardware
+    - Reduced inference latency 4.4x (420 to 65ms) with pruning and operator fusion while preserving 0.96 F1
+- id: oracle
+  org: Oracle
+  role: Product manager, contract
+  calendar: work
+  start: 2025-12-01
+  end: 2026-04-30
+  highlights:
+    - Advised Oracle Fusion Cloud SCM leadership on enterprise agent adoption across logistics/transportation workflows
+    - Designed AI implementation strategy by identifying workflow traceability, data-lineage, and integration gaps
+- id: gaia-hazlab
+  org: UW GAIA-HazLab
+  role: Undergraduate researcher
+  calendar: research
+  start: 2025-10-01
+  highlights:
+    - Unified 500+ fragmented papers into citation-grounded RAG knowledge base for 22 earth science researchers
+    - Achieved 92% Recall@K by fusing semantic search with OCR metadata extraction and indexing of scientific figures
+    - Built research agent that surfaces papers for cross-domain queries, reducing literature search from mins to seconds
+- id: varsity-swim
+  org: Varsity Swim
+  role: Captain
+  calendar: athletics
+  start: 2024-12-01
+  end: 2025-03-31
+  highlights:
+    # Quoted: an unquoted # would start a YAML comment.
+    - 'WIAA State Championship medalist (2nd, 4th, 4th) and Scholastic All-American, ranked #115 nationally in the 50 breast'
+    - 2x school record holder
+    - Led recruiting, fundraising ($8,000+), and logistics for a team of 40+ athletes
+    - Represented the team on the Athletic Leadership Council

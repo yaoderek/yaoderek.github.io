@@ -1,0 +1,45 @@
+---
+import { getCollection } from 'astro:content';
+import OsPage from '../../layouts/OsPage.astro';
+import { formatMonthRange } from '../../lib/os/format';
+
+const roles = (await getCollection('experience')).sort(
+  (a, b) => b.data.start.getTime() - a.data.start.getTime()
+);
+const base = import.meta.env.BASE_URL.replace(/\/+$/, '');
+
+const iso = (date: Date) => date.toISOString().slice(0, 10);
+---
+
+<OsPage
+  initialPath="/experience"
+  title="Experience — Derek Yao"
+  description="Where Derek Yao has worked: Contour, Oracle, and research at UW."
+>
+  <h1>Experience</h1>
+  <p><a href={`${base}/`}>← derek's mac</a></p>
+  {
+    roles.map((entry) => (
+      <section>
+        <h2>
+          <a href={`${base}/experience/${entry.data.id}`}>{entry.data.org}</a>
+        </h2>
+        <p>
+          {entry.data.role}
+          {entry.data.note ? ` — ${entry.data.note}` : ''}
+        </p>
+        <p>
+          {formatMonthRange(
+            iso(entry.data.start),
+            entry.data.end ? iso(entry.data.end) : undefined
+          )}
+        </p>
+        <ul>
+          {entry.data.highlights.map((line) => (
+            <li>{line}</li>
+          ))}
+        </ul>
+      </section>
+    ))
+  }
+</OsPage>
