@@ -26,7 +26,7 @@ export function buildTree(input: TreeInput): FSNode {
   const introNote: NoteItem = {
     id: 'intro',
     path: '/intro',
-    title: 'hey',
+    title: 'Hi there!',
     created: input.intro.created,
     html: input.intro.text,
     snippet: firstSentence(introText),
@@ -34,7 +34,7 @@ export function buildTree(input: TreeInput): FSNode {
     pinned: true,
   };
   const introNode: FSNode = {
-    name: 'hey',
+    name: 'Hi there!',
     path: '/intro',
     kind: 'Plain Text',
     icon: 'doc',

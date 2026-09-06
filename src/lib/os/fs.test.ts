@@ -92,14 +92,14 @@ describe('buildTree', () => {
     expect(visible).toEqual(['projects', 'writing', 'experience', 'art', 'life']);
   });
 
-  it('carries the intro as a hidden note, pinned and titled "hey"', () => {
+  it('carries the intro as a hidden note, pinned and titled "Hi there!"', () => {
     const intro = root.children!.find((c) => c.path === '/intro')!;
     expect(intro.hidden).toBe(true);
     expect(intro.kind).toBe('Plain Text');
     expect(intro.open?.app).toBe('notes');
     const note = intro.open?.props.note as NoteItem;
     expect(note.id).toBe('intro');
-    expect(note.title).toBe('hey');
+    expect(note.title).toBe('Hi there!');
     expect(note.path).toBe('/intro');
     // The introduction leads the list regardless of its date.
     expect(note.pinned).toBe(true);

@@ -4,8 +4,6 @@
 - id: contour
   org: Contour
   role: Software engineering intern
-  # Quoted: an unquoted # would start a YAML comment.
-  note: 'employee #5, backed by Lightspeed'
   calendar: work
   start: 2026-06-01
   highlights:

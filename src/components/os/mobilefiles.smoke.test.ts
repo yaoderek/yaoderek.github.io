@@ -30,7 +30,7 @@ const fixtureTree: FSNode = {
   children: [
     {
       // The introduction: reachable from the dock, never listed as a file.
-      name: 'hey',
+      name: 'Hi there!',
       path: '/intro',
       kind: 'Plain Text',
       icon: 'doc',
@@ -41,7 +41,7 @@ const fixtureTree: FSNode = {
           note: {
             id: 'intro',
             path: '/intro',
-            title: 'hey',
+            title: 'Hi there!',
             created: '2025-01-01',
             html: '<p>hi</p>',
             snippet: 'hi',

@@ -32,7 +32,7 @@ const tree: FSNode = {
   icon: 'folder',
   children: [
     {
-      name: 'hey',
+      name: 'Hi there!',
       path: '/intro',
       kind: 'Plain Text',
       icon: 'doc',
@@ -43,7 +43,7 @@ const tree: FSNode = {
           note: {
             id: 'intro',
             path: '/intro',
-            title: 'hey',
+            title: 'Hi there!',
             created: '2025-01-01',
             html: '<p>I am Derek.</p>',
             snippet: 'I am Derek.',
@@ -105,7 +105,7 @@ test('mounting Desktop opens the Finder at the root, hidden files aside', async 
   expect(text).toContain('projects');
   expect(text).toContain("derek's mac");
   // The introduction belongs to Notes; the Finder doesn't list it.
-  expect(text).not.toContain('hey');
+  expect(text).not.toContain('Hi there!');
 
   unmount(app);
   target.remove();

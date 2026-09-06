@@ -175,6 +175,10 @@ function daysInMonth(date: Date): number {
  * The dock icon: the Calendar tile shows the day it is, so it's drawn rather
  * than shipped as an image. Built as an SVG data URL so the dock can treat it
  * like any other icon.
+ *
+ * macOS app icons leave about a tenth of the canvas clear on every side, and
+ * the shipped icons next to this one do, so the tile is inset the same way to
+ * sit level with them.
  */
 export function calendarIconUrl(today: Date): string {
   const weekday = new Intl.DateTimeFormat('en-US', { weekday: 'short' })
@@ -182,10 +186,10 @@ export function calendarIconUrl(today: Date): string {
     .toUpperCase();
   const day = today.getDate();
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
-<rect x="4" y="4" width="120" height="120" rx="27" fill="#fff"/>
-<path d="M4 31A27 27 0 0 1 31 4h66a27 27 0 0 1 27 27v11H4z" fill="#e8524a"/>
-<text x="64" y="33" font-family="-apple-system,Helvetica,Arial,sans-serif" font-size="19" font-weight="600" fill="#fff" text-anchor="middle">${weekday}</text>
-<text x="64" y="108" font-family="-apple-system,Helvetica,Arial,sans-serif" font-size="72" font-weight="300" fill="#1d1d1f" text-anchor="middle">${day}</text>
+<rect x="12" y="12" width="104" height="104" rx="23" fill="#fff"/>
+<path d="M12 35A23 23 0 0 1 35 12h58a23 23 0 0 1 23 23v10H12z" fill="#e8524a"/>
+<text x="64" y="37" font-family="-apple-system,Helvetica,Arial,sans-serif" font-size="16.5" font-weight="600" fill="#fff" text-anchor="middle">${weekday}</text>
+<text x="64" y="103" font-family="-apple-system,Helvetica,Arial,sans-serif" font-size="62" font-weight="300" fill="#1d1d1f" text-anchor="middle">${day}</text>
 </svg>`;
   return `data:image/svg+xml,${encodeURIComponent(svg)}`;
 }

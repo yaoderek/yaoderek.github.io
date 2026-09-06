@@ -39,7 +39,7 @@ const fixtureTree: FSNode = {
   children: [
     {
       // The introduction: in the tree for the Notes app, hidden from the Finder.
-      name: 'hey',
+      name: 'Hi there!',
       path: '/intro',
       kind: 'Plain Text',
       icon: 'doc',
@@ -50,7 +50,7 @@ const fixtureTree: FSNode = {
           note: {
             id: 'intro',
             path: '/intro',
-            title: 'hey',
+            title: 'Hi there!',
             created: '2025-01-01',
             html: '<p>hi</p>',
             snippet: 'hi',
@@ -275,7 +275,7 @@ test('desktop with initialPath opens named window', async () => {
     props: { tree: fixtureTree, initialPath: '/intro', showResume: false },
   });
   await new Promise((r) => setTimeout(r, 50));
-  expect(target.textContent).toContain('hey');
+  expect(target.textContent).toContain('Hi there!');
   unmount(app);
   target.remove();
 });
@@ -388,7 +388,7 @@ test('startup stacks Notes over the Finder, with the greeting photo to the right
     '[role="dialog"][aria-label="derek\'s mac"]'
   );
   const notes = target.querySelector<HTMLElement>(
-    '[role="dialog"][aria-label="hey"]'
+    '[role="dialog"][aria-label="Hi there!"]'
   );
   const photos = target.querySelector<HTMLElement>(
     '[role="dialog"][aria-label="Photos"]'
@@ -399,7 +399,7 @@ test('startup stacks Notes over the Finder, with the greeting photo to the right
   // Notes opened on the introduction itself, not on some other note.
   expect(notes!.textContent).toContain('hi');
   // The introduction is a note now, so the Finder doesn't list it as a file.
-  expect(finder!.textContent).not.toContain('hey');
+  expect(finder!.textContent).not.toContain('Hi there!');
   // The fixture album has no photo called 'me', so the greeting falls back to
   // the last picture in it.
   expect(photos!.textContent).toContain('Taipei metro');
@@ -447,7 +447,7 @@ test('a deep-linked piece of writing opens in Notes, alongside the other notes',
   expect(notes!.textContent).toContain('Design is intention made visible.');
   // The list beside it carries every note, with the pinned intro on top.
   expect(notes!.textContent).toContain('Pinned');
-  expect(notes!.textContent).toContain('hey');
+  expect(notes!.textContent).toContain('Hi there!');
 
   unmount(app);
   target.remove();
@@ -466,7 +466,7 @@ test('the Notes dock icon opens Notes on the pinned note', async () => {
     },
   });
   await new Promise((r) => setTimeout(r, 50));
-  expect(target.querySelector('[role="dialog"][aria-label="hey"]')).toBeNull();
+  expect(target.querySelector('[role="dialog"][aria-label="Hi there!"]')).toBeNull();
 
   const dockNotes = target.querySelector<HTMLButtonElement>(
     'button[aria-label="Notes"]'
@@ -475,7 +475,7 @@ test('the Notes dock icon opens Notes on the pinned note', async () => {
   dockNotes!.click();
   await new Promise((r) => setTimeout(r, 50));
 
-  expect(target.querySelector('[role="dialog"][aria-label="hey"]')).not.toBeNull();
+  expect(target.querySelector('[role="dialog"][aria-label="Hi there!"]')).not.toBeNull();
 
   unmount(app);
   target.remove();
@@ -748,7 +748,7 @@ test('mobile: the Notes dock icon opens the introduction', async () => {
   // The phone has no windows: the files view is showing the note itself, which
   // is the only way to reach it now that it isn't listed as a file.
   expect(target.querySelector('[role="dialog"]')).toBeNull();
-  expect(target.textContent).toContain('hey');
+  expect(target.textContent).toContain('Hi there!');
 
   unmount(app);
   target.remove();
