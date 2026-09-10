@@ -171,6 +171,15 @@ const photoItems = [
     width: 1600,
     height: 1200,
   },
+  {
+    id: 'hi',
+    title: 'hi!',
+    imageUrl: '/images/hi.webp',
+    created: '2026-09-09',
+    medium: 'photo',
+    width: 876,
+    height: 896,
+  },
 ];
 
 function albumFolder(album: string, items: typeof photoItems): FSNode {
@@ -400,9 +409,7 @@ test('startup stacks Notes over the Finder, with the greeting photo to the right
   expect(notes!.textContent).toContain('hi');
   // The introduction is a note now, so the Finder doesn't list it as a file.
   expect(finder!.textContent).not.toContain('Hi there!');
-  // The fixture album has no photo called 'me', so the greeting falls back to
-  // the last picture in it.
-  expect(photos!.textContent).toContain('Taipei metro');
+  expect(photos!.textContent).toContain('hi!');
 
   // Notes sits inside the Finder's footprint rather than beside it.
   const finderLeft = parseFloat(finder!.style.left);

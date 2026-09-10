@@ -155,7 +155,7 @@
   const GREETING_NOTE = 'intro';
 
   /** The picture the desktop greets a visitor with, from the life album. */
-  const GREETING_PHOTO = 'me';
+  const GREETING_PHOTO = 'hi';
 
   // The greeting photo shares the screen with two other windows, so it is sized
   // as if the screen were this fraction of its real width.

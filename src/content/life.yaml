@@ -31,3 +31,8 @@
   created: 2026-08-24
   medium: photo
   image: ../assets/life/me.jpeg
+- id: hi
+  title: hi!
+  created: 2026-09-09
+  medium: photo
+  image: ../assets/life/hi.jpeg
