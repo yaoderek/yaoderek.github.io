@@ -1,14 +1,29 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
-  <rect x="1" y="1" width="30" height="30" rx="7" fill="#1d1d1f"/>
-  <!-- pixel-font 'd' rendered as unit blocks -->
-  <g fill="#f5f5f7">
-    <!-- ascender (right stem) -->
-    <rect x="20" y="7" width="4" height="18"/>
-    <!-- bowl top -->
-    <rect x="8" y="13" width="12" height="4"/>
-    <!-- bowl left -->
-    <rect x="8" y="13" width="4" height="12"/>
-    <!-- bowl bottom -->
-    <rect x="8" y="21" width="12" height="4"/>
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1c3856"/>
+      <stop offset="1" stop-color="#d9926c"/>
+    </linearGradient>
+    <radialGradient id="sun" cx="16" cy="30" r="15" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ffd6a6" stop-opacity=".75"/>
+      <stop offset="1" stop-color="#ffd6a6" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="32" height="32" rx="7.2" fill="url(#sky)"/>
+  <rect width="32" height="32" rx="7.2" fill="url(#sun)"/>
+  <path d="M15.3 12 L16.7 12 L17.25 26.6 Q17.5 28.6 19.4 29.4 L12.6 29.4 Q14.5 28.6 14.75 26.6 Z" fill="#4e1d12"/>
+  <g fill="#0f2219">
+    <path d="M16 1.8 C17.3 3.6 17.7 5.6 16.9 7 L15.1 7 C14.3 5.6 14.7 3.6 16 1.8 Z"/>
+    <path d="M15 4.4 C17.3 3.3 18.6 5.2 18.8 7.1 C17.82 6.5 16.91 7.1 15 6.9 Z"/>
+    <path d="M17 5.7 C14.55 4.6 13.1 6.5 12.9 8.4 C13.97 7.8 14.98 8.4 17 8.2 Z"/>
+    <path d="M15 7.3 C17.85 6.2 19.7 8.1 19.9 10 C18.59 9.4 17.3 10 15 9.8 Z"/>
+    <path d="M17 8.8 C13.95 7.7 11.9 9.6 11.7 11.5 C13.13 10.9 14.56 11.5 17 11.3 Z"/>
+    <path d="M15 10.4 C18.3 9.3 20.6 11.2 20.8 13.1 C19.22 12.5 17.61 13.1 15 12.9 Z"/>
+    <path d="M17 12 C13.5 10.9 11 12.8 10.8 14.7 C12.5 14.1 14.25 14.7 17 14.5 Z"/>
+    <path d="M15 13.7 C18.65 12.6 21.3 14.5 21.5 16.4 C19.71 15.8 17.86 16.4 15 16.2 Z"/>
+    <path d="M17 15.4 C13.6 14.3 11.2 16.2 11 18.1 C12.64 17.5 14.32 18.1 17 17.9 Z"/>
+    <path d="M15 17 C18 15.9 20 17.8 20.2 19.7 C18.8 19.1 17.4 19.7 15 19.5 Z"/>
+    <path d="M17 18.4 C14.6 17.3 13.2 19.2 13 21.1 C14.04 20.5 15.02 21.1 17 20.9 Z"/>
+    <path d="M14.9 6 L17.1 6 L17.1 19.6 L14.9 19.6 Z"/>
   </g>
 </svg>

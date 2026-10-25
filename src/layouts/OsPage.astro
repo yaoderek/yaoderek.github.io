@@ -63,12 +63,14 @@ const canonicalUrl = Astro.site
   ? new URL(Astro.url.pathname, Astro.site)
   : null;
 const canonicalHref = canonicalUrl?.href ?? null;
-// Pages without their own image fall back to a screenshot of the landing
-// desktop (public/og.jpg) so shared links always preview the site.
+const absolute = (path: string) =>
+  Astro.site ? new URL(path, Astro.site).href : path;
+// Pages without their own image fall back to the intro video (public/intro.mp4:
+// "derek yao" writing itself, then blooming into the wallpaper) with its last
+// frame (public/og.jpg) as the thumbnail, so shared links always preview the site.
 const effectiveOgImage = ogImage ?? `${base}/og.jpg`;
-const ogImageAbsolute = Astro.site
-  ? new URL(effectiveOgImage, Astro.site).href
-  : effectiveOgImage;
+const ogImageAbsolute = absolute(effectiveOgImage);
+const ogVideoAbsolute = ogImage ? null : absolute(`${base}/intro.mp4`);
 ---
 
 <html lang="en">
@@ -97,6 +99,19 @@ const ogImageAbsolute = Astro.site
     <meta property="og:type" content={ogType} />
     {canonicalHref && <meta property="og:url" content={canonicalHref} />}
     <meta property="og:image" content={ogImageAbsolute} />
+    {
+      ogVideoAbsolute && (
+        <>
+          <meta property="og:image:width" content="1200" />
+          <meta property="og:image:height" content="630" />
+          <meta property="og:video" content={ogVideoAbsolute} />
+          <meta property="og:video:secure_url" content={ogVideoAbsolute} />
+          <meta property="og:video:type" content="video/mp4" />
+          <meta property="og:video:width" content="1280" />
+          <meta property="og:video:height" content="720" />
+        </>
+      )
+    }
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:image" content={ogImageAbsolute} />
     {
