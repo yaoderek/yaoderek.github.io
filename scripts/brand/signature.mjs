@@ -1,86 +1,114 @@
-// The "derek yao" signature: a hand-authored monoline cursive path, sheared
-// into a slant and smoothed with centripetal Catmull-Rom (sharp cusps kept).
-// signatureStrokes() returns dense strokes normalised to width 1.
+// The "derek yao" signature, drawn by a simulated hand (see below) through
+// hand-placed targets. signatureStrokes() returns timed strokes normalised to
+// width 1.
 
-// y-up units, x-height 100. Each word is one continuous pen stroke;
-// [x, y, 1] marks a sharp cusp.
+// y-up units, x-height 100. Each entry is one continuous pen stroke;
+// [x, y, 1] marks a sharp cusp. Written like a signature: a flicked lead-in,
+// tall narrow loops, long connecting strokes, and a swash off the final "o"
+// that sweeps back under the whole name.
 export const WORDS = [
   [ // derek
-    // d: bowl counter-clockwise, looped ascender, down the stem, exit
-    [74, 82], [54, 100], [24, 96], [6, 66], [2, 28], [16, 4], [40, 0], [62, 16], [78, 46],
-    [98, 116], [114, 172], [120, 206], [114, 220], [100, 212], [92, 182],
-    [86, 130], [81, 76], [79, 32], [84, 9], [98, 0], [120, 8], [142, 28],
+    // lead-in flick up into the d
+    [-46, 34], [10, 70], [80, 96, 1],
+    // d: bowl counter-clockwise, tall looped ascender, down the stem, exit
+    [56, 104], [24, 96], [5, 64], [2, 26], [18, 2], [44, -2], [68, 16], [84, 48],
+    [104, 130], [124, 210], [132, 262], [124, 280], [108, 268], [98, 226],
+    [90, 150], [84, 80], [82, 30], [88, 6], [104, -2], [130, 10], [160, 40],
     // e
-    [168, 50], [190, 72], [200, 92], [194, 106], [178, 104], [162, 84], [154, 54], [156, 22], [170, 2], [196, 0], [222, 14], [244, 36],
+    [186, 66], [210, 92], [216, 110], [206, 120], [188, 110], [172, 80], [168, 40], [178, 8], [202, -2], [232, 8], [262, 36],
     // r: rise to a point, a little flag, then down the stem
-    [262, 72], [270, 102, 1], [282, 94], [296, 96], [306, 102, 1],
-    [302, 64], [298, 24], [304, 4], [322, 0], [346, 14], [366, 34],
+    [282, 74], [292, 108, 1], [306, 96], [322, 100], [334, 108, 1],
+    [330, 64], [326, 22], [334, 2], [356, -2], [384, 14], [410, 38],
     // e
-    [392, 54], [414, 74], [424, 92], [418, 106], [402, 104], [386, 84], [378, 54], [380, 22], [394, 2], [420, 0], [446, 14], [468, 38],
-    // k: looped ascender, stem, small loop arm, kicked leg
-    [488, 80], [504, 140], [514, 186], [516, 212], [506, 222], [494, 206], [488, 170], [480, 110], [472, 50], [468, 2, 1],
-    [474, 40], [488, 76], [508, 98], [530, 104], [542, 90], [532, 72], [508, 64], [490, 62, 1],
-    [512, 50], [526, 24], [540, 4], [562, 0], [588, 14],
+    [436, 62], [460, 90], [468, 108], [458, 120], [440, 110], [424, 80], [420, 40], [430, 8], [456, -2], [486, 8], [514, 36],
+    // k: tall looped ascender, stem, small loop arm, kicked leg
+    [536, 84], [556, 160], [570, 226], [574, 268], [562, 282], [548, 264], [540, 214], [530, 140], [520, 60], [514, 0, 1],
+    [522, 46], [538, 84], [562, 106], [588, 112], [600, 96], [588, 76], [560, 68], [540, 66, 1],
+    [566, 52], [584, 24], [600, 4], [626, -2], [660, 14], [690, 40],
   ],
   [ // yao
-    // y: u-like first half, looped descender
-    [636, 72], [646, 100, 1], [640, 56], [640, 18], [654, 0], [678, 6], [696, 36], [706, 100, 1],
-    [702, 40], [696, -24], [686, -78], [670, -108], [648, -112], [640, -94], [654, -64], [688, -32], [726, -6], [756, 18],
+    // y: u-like first half, a long descender loop that swings back up into the a
+    [742, 60], [756, 104, 1], [748, 56], [748, 16], [764, -2], [792, 6], [812, 40], [824, 104, 1],
+    [818, 30], [808, -50], [794, -120], [770, -170], [740, -180], [726, -160], [740, -120], [780, -74], [830, -34], [870, 4],
     // a: over the top, bowl counter-clockwise, stem, exit
-    [776, 54], [794, 92, 1], [772, 102], [746, 96], [728, 68], [726, 30], [740, 4], [764, 0], [786, 18], [798, 52], [804, 100, 1],
-    [800, 50], [800, 14], [814, 0], [838, 6], [860, 30],
-    // o: up and around, finished with a little flourish off the top
-    [880, 70], [894, 100, 1], [870, 100], [854, 80], [850, 44], [860, 12], [882, 0], [908, 8], [922, 40], [918, 80], [898, 100], [882, 96],
-    [904, 92], [934, 94], [964, 104],
+    [896, 52], [918, 94, 1], [892, 106], [862, 98], [842, 66], [840, 26], [856, 0], [884, -4], [910, 18], [924, 56], [932, 106, 1],
+    [926, 50], [926, 12], [942, -2], [970, 6], [994, 32],
+    // o, closed at the top
+    [1016, 72], [1032, 104, 1], [1004, 106], [984, 82], [980, 42], [994, 8], [1020, -4], [1050, 8], [1064, 46], [1058, 88], [1034, 106], [1014, 98],
+    // swash: flick out to the right, then a fast curved sweep back under the name
+    [1050, 92], [1092, 72], [1114, 32], [1102, -14], [1052, -52], [950, -80], [800, -96],
+    [620, -100], [440, -92], [280, -76], [150, -56], [80, -42],
   ],
 ];
 
-const SLANT = 0.22;
+const SLANT = 0.4;
+const NARROW = 0.86; // letters run narrow and lean hard, like a fast hand
 
-const sub = (a, b) => [a[0] - b[0], a[1] - b[1]];
-const len = (v) => Math.hypot(v[0], v[1]);
+// ---------- a simulated hand ----------
+// The points above aren't traced. They're targets for a pen with momentum,
+// like a wrist: it accelerates toward the next target, cuts the corner, and
+// moves on before it quite arrives, overshooting slightly. Cusps make it
+// come almost to rest and turn. The speed, rounding and wobble all come out
+// of that motion, and every sample keeps the time it was drawn at.
 
-// split a polyline at sharp corners so Catmull-Rom doesn't round them off
-function splitCusps(pts) {
-  const out = [[pts[0]]];
-  for (let i = 1; i < pts.length - 1; i++) {
-    const a = sub(pts[i], pts[i - 1]), b = sub(pts[i + 1], pts[i]);
-    const cos = (a[0] * b[0] + a[1] * b[1]) / (len(a) * len(b) || 1);
-    out.at(-1).push(pts[i]);
-    if (pts[i].cusp || cos < -0.6) out.push([pts[i]]);
-  }
-  out.at(-1).push(pts.at(-1));
-  return out;
+// two springs in series: an "intent" chases the targets, and the pen chases
+// the intent. One spring alone leaves kinks where it switches targets; two
+// give the smooth, continuous curvature of a real wrist.
+const INTENT = { omega: 70, zeta: 0.9 };
+const HAND = { omega: 52, zeta: 0.82 };
+const REACH = 12;     // how close the intent gets before heading for the next target
+const REACH_CUSP = 3;
+const DT = 1 / 2000;
+
+// seeded so every render is the same hand
+let seed = 11;
+const rand = () => ((seed = (seed * 16807) % 2147483647) - 1) / 2147483646;
+
+function humanise(word) {
+  // a hand is never exact: each target lands a little off, the baseline
+  // drifts, and letters swell and shrink as the writer goes
+  return word.map(([x, y, c]) => {
+    const size = 1 + 0.07 * Math.sin(x / 97 + 1.3);
+    const drift = 7 * Math.sin(x / 210 + 0.4);
+    return [x + (rand() - 0.5) * 5, y * size + drift + (rand() - 0.5) * 4, c];
+  });
 }
 
-function catmull(pts) {
-  if (pts.length < 3) return pts;
-  // reflect the end points to get tangents at the ends
-  const P = [sub(pts[0], sub(pts[1], pts[0])), ...pts, sub(pts.at(-1), sub(pts.at(-2), pts.at(-1)))];
-  const out = [];
-  for (let i = 1; i < P.length - 2; i++) {
-    const [p0, p1, p2, p3] = [P[i - 1], P[i], P[i + 1], P[i + 2]];
-    const t0 = 0, t1 = t0 + Math.sqrt(len(sub(p1, p0))) || 1e-4;
-    const t2 = t1 + (Math.sqrt(len(sub(p2, p1))) || 1e-4), t3 = t2 + (Math.sqrt(len(sub(p3, p2))) || 1e-4);
-    const n = Math.max(2, Math.ceil(len(sub(p2, p1)) / 2.5));
-    for (let k = i === 1 ? 0 : 1; k <= n; k++) {
-      const t = t1 + (t2 - t1) * (k / n);
-      const L = (a, b, ta, tb) => [0, 1].map((j) => ((tb - t) * a[j] + (t - ta) * b[j]) / (tb - ta));
-      const A1 = L(p0, p1, t0, t1), A2 = L(p1, p2, t1, t2), A3 = L(p2, p3, t2, t3);
-      const B1 = L(A1, A2, t0, t2), B2 = L(A2, A3, t1, t3);
-      out.push(L(B1, B2, t1, t2));
-    }
+function spring(p, v, target, { omega, zeta }) {
+  const ax = omega * omega * (target[0] - p[0]) - 2 * zeta * omega * v[0];
+  const ay = omega * omega * (target[1] - p[1]) - 2 * zeta * omega * v[1];
+  v[0] += ax * DT; v[1] += ay * DT;
+  p[0] += v[0] * DT; p[1] += v[1] * DT;
+}
+
+function simulate(targets) {
+  const start = targets[0];
+  // both already moving toward the second target as the pen lands
+  const lead = [(targets[1][0] - start[0]) * 3, (targets[1][1] - start[1]) * 3];
+  const ip = [...start.slice(0, 2)], iv = [...lead];
+  const pp = [...start.slice(0, 2)], pv = [...lead];
+  let t = 0, i = 1;
+  const out = [[pp[0], pp[1], 0]];
+  for (let step = 0; step < 400000; step++) {
+    const target = targets[Math.min(i, targets.length - 1)];
+    spring(ip, iv, target, INTENT);
+    spring(pp, pv, ip, HAND);
+    t += DT;
+    const last = out.at(-1);
+    if (Math.hypot(pp[0] - last[0], pp[1] - last[1]) > 1.2) out.push([pp[0], pp[1], t]);
+    if (i < targets.length) {
+      const reach = target[2] ? REACH_CUSP : REACH;
+      if (Math.hypot(target[0] - ip[0], target[1] - ip[1]) < reach) i++;
+    } else if (Math.hypot(target[0] - pp[0], target[1] - pp[1]) < 2) break;
   }
+  out.push([pp[0], pp[1], t]);
   return out;
 }
 
 export function signatureStrokes() {
-  // shear into a slant (y flipped to screen space), keeping the cusp flags
-  const raw = WORDS.map((w) => w.map(([px, py, c]) => Object.assign([px + py * SLANT, -py], { cusp: !!c })));
-  const strokes = raw.map((s) => splitCusps(s).flatMap((piece, i) => {
-    const c = catmull(piece);
-    return i === 0 ? c : c.slice(1);
-  }));
+  // slant and narrow the targets (y flipped to screen space), then let the
+  // hand draw through them
+  const strokes = WORDS.map((w) => simulate(humanise(w).map(([px, py, c]) => [px * NARROW + py * SLANT, -py, !!c])));
 
   let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
   for (const s of strokes) for (const [px, py] of s) {
@@ -90,6 +118,7 @@ export function signatureStrokes() {
   const w = maxX - minX;
   return {
     aspect: (maxY - minY) / w,
-    strokes: strokes.map((s) => s.map(([px, py]) => [+((px - minX) / w).toFixed(5), +((py - minY) / w).toFixed(5)])),
+    // [x, y, seconds since this stroke's pen-down]
+    strokes: strokes.map((s) => s.map(([px, py, t]) => [+((px - minX) / w).toFixed(5), +((py - minY) / w).toFixed(5), +t.toFixed(4)])),
   };
 }

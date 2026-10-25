@@ -10,16 +10,17 @@
 <body>
 <canvas id="gl"></canvas>
 <script>
-// "derek yao" writes itself in a single-line script, then blooms into the
-// Big Sur wallpaper. Deterministic: window.renderAt(t) draws the frame at t
-// seconds, so a headless browser can step it frame by frame for video.
+// "derek yao" signs itself like a real hand (variable speed and pressure),
+// then the Big Sur wallpaper fades in blurred and sharpens, like macOS
+// logging in. Deterministic: window.renderAt(t) draws the frame at t seconds,
+// so a headless browser can step it frame by frame for video.
 const W = +(new URLSearchParams(location.search).get('w') || 1280);
 const H = +(new URLSearchParams(location.search).get('h') || 720);
 const DURATION = 7.5;
 
 const T = {
-  writeStart: 0.45, writeEnd: 3.85,
-  bloomStart: 4.05, bloomEnd: 6.1,
+  writeStart: 0.35, writeEnd: 3.95,
+  revealStart: 4.2, revealEnd: 6.1,
 };
 
 const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
@@ -29,36 +30,62 @@ const easeOutCubic = (t) => 1 - Math.pow(1 - clamp(t), 3);
 const easeInOutSine = (t) => -(Math.cos(Math.PI * clamp(t)) - 1) / 2;
 
 // ---------- signature path + pen timing ----------
-let SIG = null;     // { aspect, strokes }
-let COST = null;    // per-stroke cumulative "time cost" arrays
-let TOTAL = 0;
+// The strokes come with the time each point was drawn (signature.mjs runs a
+// simulated hand), so the reveal replays that motion as-is, scaled to fit.
+// Ink pools where the pen slows and pulls down, and thins where it flies.
+let SIG = null;     // { aspect, strokes: [[x, y, t]] }
+let PEN = null;     // per stroke: { t: [s], w: [width] }, times in seconds from writeStart
+
+const WRITE = T.writeEnd - T.writeStart;
+const LIFT = 0.16;  // seconds the pen hangs in the air between words
+
+function smooth(a, r) {
+  const out = a.slice();
+  for (let i = 0; i < a.length; i++) {
+    let s = 0, n = 0;
+    for (let j = Math.max(0, i - r); j <= Math.min(a.length - 1, i + r); j++) { s += a[j]; n++; }
+    out[i] = s / n;
+  }
+  return out;
+}
 
 function buildTiming() {
-  COST = [];
-  let acc = 0;
-  SIG.strokes.forEach((s, si) => {
-    if (si > 0) {
-      // pen lift: a short pause scaled by how far the pen travels
-      const a = SIG.strokes[si - 1].at(-1), b = s[0];
-      acc += 0.012 + Math.hypot(b[0] - a[0], b[1] - a[1]) * 0.25;
-    }
-    const c = [acc];
-    for (let i = 1; i < s.length; i++) {
-      const d = Math.hypot(s[i][0] - s[i - 1][0], s[i][1] - s[i - 1][1]);
-      let k = 0;
-      if (i > 1 && i < s.length) {
-        const ax = s[i - 1][0] - s[i - 2][0], ay = s[i - 1][1] - s[i - 2][1];
-        const bx = s[i][0] - s[i - 1][0], by = s[i][1] - s[i - 1][1];
-        const cos = (ax * bx + ay * by) / ((Math.hypot(ax, ay) * Math.hypot(bx, by)) || 1);
-        k = 1 - clamp(cos, -1, 1); // 0 straight .. 2 reversal
-      }
-      // a hand slows down through tight turns
-      acc += d * (1 + 2.2 * k) + k * 0.004;
-      c.push(acc);
-    }
-    COST.push(c);
+  const raw = SIG.strokes.map((s) => {
+    const n = s.length;
+    const ds = [0];
+    for (let i = 1; i < n; i++) ds.push(Math.hypot(s[i][0] - s[i - 1][0], s[i][1] - s[i - 1][1]));
+    const speed = s.map((p, i) => (i ? ds[i] / Math.max(1e-5, p[2] - s[i - 1][2]) : 0));
+    speed[0] = speed[1];
+    const v = smooth(smooth(speed, 8), 8);
+    const down = smooth(s.map((p, i) => {
+      const q = s[Math.min(n - 1, i + 1)], r = s[Math.max(0, i - 1)];
+      return (q[1] - r[1]) / (Math.hypot(q[0] - r[0], q[1] - r[1]) || 1);
+    }), 9);
+    return { t: s.map((p) => p[2]), v, down, ds, len: ds.reduce((x, y) => x + y, 0) };
   });
-  TOTAL = acc;
+
+  const ink = raw.reduce((a, r) => a + r.t.at(-1), 0);
+  const scale = (WRITE - LIFT * (raw.length - 1)) / ink;
+  const vs = raw.flatMap((r) => r.v).sort((a, b) => a - b);
+  const vlo = vs[Math.floor(vs.length * 0.05)], vhi = vs[Math.floor(vs.length * 0.95)];
+  let start = 0;
+  PEN = raw.map((r, si) => {
+    let along = 0;
+    const w = r.v.map((vi, i) => {
+      along += r.ds[i];
+      const slow = 1 - clamp((vi - vlo) / (vhi - vlo));      // 1 = slowest
+      // thin, fast upstrokes; heavier where the pen slows or pulls down
+      const press = 0.42 + 0.55 * Math.pow(slow, 1.2) + 0.65 * Math.max(0, r.down[i]);
+      // pen lands softly and lifts off fast; the final swash trails off long
+      const tailLen = si === raw.length - 1 ? 0.22 : 0.05;
+      const head = sstep(0, 0.012, along / r.len);
+      const tail = sstep(0, tailLen, 1 - along / r.len);
+      return press * (0.25 + 0.75 * head) * (0.08 + 0.92 * tail);
+    });
+    const t = r.t.map((x) => start + x * scale);
+    start = t.at(-1) + LIFT;
+    return { t, w };
+  });
 }
 
 // ---------- 2D signature canvas (2x for clean mips) ----------
@@ -68,52 +95,41 @@ sigCanvas.width = W * SS; sigCanvas.height = H * SS;
 const sctx = sigCanvas.getContext('2d');
 
 function sigTransform(t) {
-  // gentle push-in while writing, settling after the bloom
-  const push = lerp(1.0, 1.035, easeInOutSine((t - T.writeStart) / (T.bloomEnd - T.writeStart)));
-  const sw = W * SS * 0.6 * push;
+  // gentle push-in while writing, settling as the desktop sharpens
+  const push = lerp(1.0, 1.03, easeInOutSine((t - T.writeStart) / (T.revealEnd - T.writeStart)));
+  const sw = W * SS * 0.64 * push;
   const sh = sw * SIG.aspect;
   const ox = (W * SS - sw) / 2;
-  const oy = (H * SS - sh) / 2 - H * SS * 0.03;
+  const oy = (H * SS - sh) / 2 - H * SS * 0.005;
   return { sw, ox, oy };
 }
 
 function drawSignature(t) {
   const { sw, ox, oy } = sigTransform(t);
-  const p = clamp((t - T.writeStart) / (T.writeEnd - T.writeStart));
-  // mostly-constant pen speed with soft start/finish
-  const eased = p < 0.06 ? (p / 0.06) ** 2 * 0.03
-    : p > 0.92 ? 1 - ((1 - p) / 0.08) ** 2 * 0.05
-    : 0.03 + (p - 0.06) / 0.86 * 0.92;
-  const target = eased * TOTAL;
+  const now = t - T.writeStart;
+  const base = sw * 0.0072;
 
   sctx.clearRect(0, 0, sigCanvas.width, sigCanvas.height);
   sctx.lineCap = 'round';
-  sctx.lineJoin = 'round';
   sctx.strokeStyle = '#fff';
-  sctx.lineWidth = sw * 0.0085;
 
   let tip = null;
   SIG.strokes.forEach((s, si) => {
-    const c = COST[si];
-    if (target <= c[0]) return;
-    sctx.beginPath();
-    sctx.moveTo(ox + s[0][0] * sw, oy + s[0][1] * sw);
+    const { t: ts, w } = PEN[si];
+    if (now <= ts[0]) return;
+    let px = ox + s[0][0] * sw, py = oy + s[0][1] * sw;
     for (let i = 1; i < s.length; i++) {
-      if (c[i] <= target) {
-        sctx.lineTo(ox + s[i][0] * sw, oy + s[i][1] * sw);
-        tip = [ox + s[i][0] * sw, oy + s[i][1] * sw];
-      } else {
-        const f = (target - c[i - 1]) / (c[i] - c[i - 1]);
-        const x = ox + lerp(s[i - 1][0], s[i][0], f) * sw;
-        const y = oy + lerp(s[i - 1][1], s[i][1], f) * sw;
-        sctx.lineTo(x, y);
-        tip = [x, y];
-        break;
-      }
+      let f = 1;
+      if (ts[i] > now) f = (now - ts[i - 1]) / (ts[i] - ts[i - 1]);
+      const x = ox + lerp(s[i - 1][0], s[i][0], f) * sw;
+      const y = oy + lerp(s[i - 1][1], s[i][1], f) * sw;
+      sctx.lineWidth = base * lerp(w[i - 1], w[i], f * 0.5);
+      sctx.beginPath(); sctx.moveTo(px, py); sctx.lineTo(x, y); sctx.stroke();
+      px = x; py = y; tip = [x, y];
+      if (f < 1) break;
     }
-    sctx.stroke();
   });
-  const writing = p > 0 && p < 1;
+  const writing = now > 0 && now < WRITE;
   return { tip: tip ? [tip[0] / sigCanvas.width, tip[1] / sigCanvas.height] : [0.5, 0.5], tipOn: writing ? 1 : 0 };
 }
 
@@ -131,14 +147,9 @@ precision highp float;
 in vec2 vUv; out vec4 o;
 uniform sampler2D uWall, uSig;
 uniform vec2 uRes, uTip;
-uniform float uTime, uReveal, uZoom, uWallBlur, uGlow, uRim, uFlash, uWhite, uShadow, uTipOn, uCropY;
+uniform float uTime, uFade, uBlur, uZoom, uGlow, uExpo, uShadow, uTipOn, uCropY;
 
 float hash(vec2 p){ p = fract(p*vec2(123.34, 456.21)); p += dot(p, p+45.32); return fract(p.x*p.y); }
-float noise(vec2 p){
-  vec2 i = floor(p), f = fract(p); f = f*f*(3.-2.*f);
-  return mix(mix(hash(i), hash(i+vec2(1,0)), f.x), mix(hash(i+vec2(0,1)), hash(i+vec2(1,1)), f.x), f.y);
-}
-float fbm(vec2 p){ float v=0., a=.5; for(int i=0;i<5;i++){ v+=a*noise(p); p*=2.03; a*=.5; } return v; }
 
 // smooth blur of the signature: golden-spiral taps at a given mip level
 float sigBlur(vec2 uv, float lod, float radius){
@@ -152,6 +163,20 @@ float sigBlur(vec2 uv, float lod, float radius){
   return s / 16.;
 }
 
+// a smooth wide blur of the wallpaper (radius in uv): spiral taps at a mip
+// level matched to the radius, so even a heavy blur has no blocky texels
+vec3 wallBlur(vec2 uv, float r){
+  if (r < 0.0004) return textureLod(uWall, uv, 0.).rgb;
+  float lod = max(0., log2(r * float(textureSize(uWall, 0).x) / 6.));
+  vec3 s = vec3(0.);
+  for (int i = 0; i < 32; i++) {
+    float fi = float(i) + .5;
+    float a = fi * 2.39996;
+    s += textureLod(uWall, uv + vec2(cos(a), sin(a)) * sqrt(fi / 32.) * r, lod).rgb;
+  }
+  return s / 32.;
+}
+
 void main(){
   vec2 uv = vUv;
   float aspect = uRes.x / uRes.y;
@@ -160,7 +185,7 @@ void main(){
   vec2 c = vec2(.5, uCropY);
   vec2 wuv = vec2(uv.x, uCropY + (uv.y - .5) / aspect);
   wuv = (wuv - c) / uZoom + c;
-  vec3 wall = textureLod(uWall, wuv, uWallBlur).rgb;
+  vec3 wall = wallBlur(wuv, uBlur);
 
   float core = texture(uSig, uv).r;
   float g1 = sigBlur(uv, 2., .006);
@@ -168,33 +193,23 @@ void main(){
   float g3 = sigBlur(uv, 6., .09);
   float glow = g1*.55 + g2*.9 + g3*1.1;
 
-  // bloom front: grows outward from the letters, edge broken up by noise
-  vec2 p = (uv - .5) * vec2(aspect, 1.);
-  float d = length(p * vec2(.8, 1.));
-  float n = fbm(p * 2.2 + vec2(0., uTime * .12));
-  float field = uReveal * 2.2 - .6 - d + (n - .5) * .28 + g3 * 1.3;
-  float mask = smoothstep(0., .2, field);
-  float rim = exp(-pow((field - .1) / .08, 2.));
-
-  // the leading edge is the wallpaper itself, overexposed, so light seems to pour in
-  float expo = 1. + uFlash * .35 + rim * uRim * 2.4;
-  vec3 col = mix(vec3(0.), wall * expo + (uFlash * .05 + rim * uRim * .12) * vec3(1., .94, .86), mask);
+  // like macOS logging in: the wallpaper appears blurred and dimmed, as it is
+  // behind the login window, then the blur clears to the sharp desktop
+  vec3 col = wall * uExpo * uFade;
 
   // soft shadow so the white script reads over the landscape
   float sh = sigBlur(uv - vec2(0., .005), 3., .01);
-  col *= 1. - (.5 * sh + .35 * g3) * uShadow * mask;
+  col *= 1. - (.55 * sh + .25 * g2 + .45 * g3) * uShadow * uFade;
 
-  col += glow * uGlow * mix(vec3(.75, .85, 1.), vec3(1., .9, .75), uRim);
-  col = mix(col, vec3(1.), core * uWhite);
+  col += glow * uGlow * vec3(1., .96, .9);
+  col = mix(col, vec3(1.), core);
 
   // a faint light where the pen touches
   vec2 tp = (uv - uTip) * vec2(aspect, 1.);
   col += uTipOn * exp(-dot(tp, tp) * 9000.) * vec3(.9, .95, 1.) * .55;
 
-  // vignette + a hair of grain to keep gradients from banding
-  float vig = smoothstep(1.25, .35, length((uv - .5) * vec2(aspect*.75, 1.)));
-  col *= mix(.78, 1., vig);
-  col += (hash(uv * uRes + uTime) - .5) * .012;
+  // a hair of static dither to keep the blur from banding
+  col += (hash(uv * uRes) - .5) * .008;
   o = vec4(col, 1.);
 }`;
 
@@ -215,7 +230,7 @@ const loc = gl.getAttribLocation(prog, 'aPos');
 gl.enableVertexAttribArray(loc);
 gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
 const U = {};
-for (const n of ['uWall','uSig','uRes','uTip','uTime','uReveal','uZoom','uWallBlur','uGlow','uRim','uFlash','uWhite','uShadow','uTipOn','uCropY'])
+for (const n of ['uWall','uSig','uRes','uTip','uTime','uFade','uBlur','uZoom','uGlow','uExpo','uShadow','uTipOn','uCropY'])
   U[n] = gl.getUniformLocation(prog, n);
 
 function makeTex(unit) {
@@ -242,10 +257,10 @@ window.renderAt = (t) => {
   const { tip, tipOn } = drawSignature(t);
   upload(1, sigTex, sigCanvas);
 
-  const b = (t - T.bloomStart) / (T.bloomEnd - T.bloomStart);
-  const writeDone = sstep(T.writeEnd - 0.2, T.bloomStart + 0.1, t);
-  const reveal = easeInOutSine(clamp(b));
-  const flash = sstep(0, 0.25, b) * (1 - sstep(0.35, 1.0, b));
+  const easeInOutCubic = (x) => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
+  // fade the blurred, dimmed wallpaper in, then clear the blur
+  const fade = easeOutCubic((t - T.revealStart) / 0.7);
+  const clear = easeInOutCubic(clamp((t - T.revealStart - 0.3) / (T.revealEnd - T.revealStart - 0.3)));
 
   gl.viewport(0, 0, W, H);
   gl.uniform1i(U.uWall, 0);
@@ -253,16 +268,13 @@ window.renderAt = (t) => {
   gl.uniform2f(U.uRes, W, H);
   gl.uniform2f(U.uTip, tip[0], tip[1]);
   gl.uniform1f(U.uTime, t);
-  gl.uniform1f(U.uReveal, reveal);
-  // wallpaper arrives soft and close, then sharpens and pulls back (Ken Burns tail)
-  gl.uniform1f(U.uZoom, lerp(1.32, 1.0, easeOutCubic((t - T.bloomStart) / (DURATION - T.bloomStart))));
-  gl.uniform1f(U.uWallBlur, lerp(5.0, 0.0, easeOutCubic(b * 1.15)));
-  // glow: faint while writing, swells as the bloom ignites, then fades out
-  gl.uniform1f(U.uGlow, 0.07 + writeDone * 0.3 * (1 - sstep(0.2, 0.9, b)) - sstep(0.5, 1.0, b) * 0.07);
-  gl.uniform1f(U.uRim, sstep(0, 0.15, b) * (1 - sstep(0.75, 1.0, b)));
-  gl.uniform1f(U.uFlash, flash);
-  gl.uniform1f(U.uWhite, 1.0);
-  gl.uniform1f(U.uShadow, sstep(0.3, 0.9, b));
+  gl.uniform1f(U.uFade, fade);
+  gl.uniform1f(U.uBlur, lerp(0.045, 0.0, clear));
+  gl.uniform1f(U.uExpo, lerp(0.62, 0.92, clear));
+  // a slight settle into place as it sharpens
+  gl.uniform1f(U.uZoom, lerp(1.06, 1.0, easeOutCubic((t - T.revealStart) / (DURATION - T.revealStart))));
+  gl.uniform1f(U.uGlow, 0.06 * (1 - clear));
+  gl.uniform1f(U.uShadow, clear);
   gl.uniform1f(U.uTipOn, tipOn);
   gl.uniform1f(U.uCropY, 0.43);
   gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
