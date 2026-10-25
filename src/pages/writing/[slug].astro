@@ -2,6 +2,7 @@
 import { getCollection, render } from 'astro:content';
 import OsPage from '../../layouts/OsPage.astro';
 import { formatDate, firstSentence, stripHtml } from '../../lib/os/format';
+import { personRef } from '../../lib/seo';
 
 export async function getStaticPaths() {
   const writing = await getCollection('writing');
@@ -25,11 +26,7 @@ const jsonLd = {
   datePublished: dateIso,
   description,
   url: Astro.site ? new URL(Astro.url.pathname, Astro.site).href : undefined,
-  author: {
-    '@type': 'Person',
-    name: 'Derek Yao',
-    url: Astro.site ? new URL(import.meta.env.BASE_URL, Astro.site).href : undefined,
-  },
+  author: personRef(Astro.site),
 };
 ---
 
@@ -38,6 +35,7 @@ const jsonLd = {
   title={`${data.title} — Derek Yao`}
   description={description}
   jsonLd={jsonLd}
+  ogType="article"
 >
   <article>
     <p><a href={`${base}/writing`}>← writing</a></p>

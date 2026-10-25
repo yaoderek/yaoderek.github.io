@@ -3,6 +3,7 @@ import { getCollection, render } from 'astro:content';
 import { getImage, Image } from 'astro:assets';
 import OsPage from '../../layouts/OsPage.astro';
 import { formatDate } from '../../lib/os/format';
+import { absolute, personRef } from '../../lib/seo';
 
 export async function getStaticPaths() {
   const projects = await getCollection('projects');
@@ -21,6 +22,20 @@ const ogImage = thumb.src;
 
 const base = import.meta.env.BASE_URL.replace(/\/+$/, '');
 
+const jsonLd = {
+  '@type': 'CreativeWork',
+  name: data.title,
+  headline: data.title,
+  description: data.oneLiner,
+  genre: data.kind,
+  keywords: data.stack.join(', '),
+  dateCreated: data.created.toISOString().slice(0, 10),
+  url: absolute(Astro.url.pathname, Astro.site),
+  image: absolute(ogImage, Astro.site),
+  creator: personRef(Astro.site),
+  ...(data.repo ? { sameAs: data.repo } : {}),
+};
+
 const meta: [string, string][] = [
   ['Stack', data.stack.join(', ')],
   ['Status', data.status],
@@ -33,6 +48,7 @@ const meta: [string, string][] = [
   title={`${data.title} — Derek Yao`}
   description={data.oneLiner}
   ogImage={ogImage}
+  jsonLd={jsonLd}
 >
   <article>
     <p><a href={`${base}/projects`}>← projects</a></p>

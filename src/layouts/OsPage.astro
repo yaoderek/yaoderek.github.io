@@ -11,6 +11,7 @@ import previewIcon from '../assets/dock/preview.png';
 import mailIcon from '../assets/dock/mail.png';
 import githubIcon from '../assets/dock/github.svg';
 import trashIcon from '../assets/dock/trash.png';
+import { PERSON } from '../lib/seo';
 import '../styles/global.css';
 
 interface Props {
@@ -20,6 +21,7 @@ interface Props {
   ogImage?: string | null;
   notFound?: boolean;
   jsonLd?: Record<string, unknown> | null;
+  ogType?: 'website' | 'profile' | 'article';
 }
 
 const {
@@ -29,6 +31,7 @@ const {
   ogImage = null,
   notFound = false,
   jsonLd = null,
+  ogType = 'website',
 } = Astro.props;
 
 const { tree, showResume } = await getDesktopProps();
@@ -72,12 +75,17 @@ const ogImageAbsolute = Astro.site
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- Hides the static page below once the desktop is going to run. Set
+         before first paint so JS visitors never see it flash. -->
+    <script is:inline>document.documentElement.classList.add('js');</script>
     <meta
       name="google-site-verification"
       content="QLLgUfDMQJ-kVpywEdAo9US8p4P8AfZdppLnNUUtetg"
     />
     <title>{title}</title>
     <meta name="description" content={description} />
+    <meta name="author" content={PERSON.name} />
+    {PERSON.sameAs.map((href) => <link rel="me" href={href} />)}
     {canonicalHref && <link rel="canonical" href={canonicalHref} />}
     <link rel="icon" type="image/svg+xml" href={`${base}/favicon.svg`} />
     <link rel="icon" type="image/png" sizes="96x96" href={`${base}/favicon-96x96.png`} />
@@ -86,7 +94,7 @@ const ogImageAbsolute = Astro.site
     <meta property="og:site_name" content="Derek Yao" />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
-    <meta property="og:type" content="website" />
+    <meta property="og:type" content={ogType} />
     {canonicalHref && <meta property="og:url" content={canonicalHref} />}
     <meta property="og:image" content={ogImageAbsolute} />
     <meta name="twitter:card" content="summary_large_image" />
@@ -122,11 +130,14 @@ const ogImageAbsolute = Astro.site
       wallpaperUrl={wallpaper.src}
       dockIcons={dockIcons}
     />
-    <noscript>
-      <main class="noscript-content">
-        <slot />
-      </main>
-    </noscript>
+    <!-- The page's content as plain HTML, in the document rather than in
+         <noscript>: crawlers that don't run JS (GPTBot, ClaudeBot,
+         PerplexityBot) and text extractors that strip <noscript> read this.
+         The .js class hides it once the desktop takes over, which renders
+         the same content in its windows. -->
+    <main class="static-content">
+      <slot />
+    </main>
   </body>
 </html>
 
@@ -140,9 +151,20 @@ const ogImageAbsolute = Astro.site
     overflow: hidden;
   }
 
-  /* The desktop island replaces the viewport when JS runs; the noscript
-     fallback is the real crawlable / no-JS page, so let it scroll. */
-  .noscript-content {
+  /* Without JS there's no desktop, just the static page, so let it scroll. */
+  html:not(.js),
+  html:not(.js) body {
+    overflow: auto;
+    height: auto;
+  }
+
+  .js .static-content {
+    display: none;
+  }
+
+  /* The desktop island replaces the viewport when JS runs; the static
+     content is the real crawlable / no-JS page. */
+  .static-content {
     display: block;
     max-width: 44rem;
     margin: 0 auto;
@@ -155,14 +177,14 @@ const ogImageAbsolute = Astro.site
     color: #1d1d1f;
   }
 
-  .noscript-content img {
+  .static-content img {
     max-width: 100%;
     height: auto;
     border-radius: 8px;
     margin: 1rem 0;
   }
 
-  .noscript-content a {
+  .static-content a {
     color: #0066cc;
   }
 </style>

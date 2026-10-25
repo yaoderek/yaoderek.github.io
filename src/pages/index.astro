@@ -1,33 +1,55 @@
 ---
+import { getImage } from 'astro:assets';
 import OsPage from '../layouts/OsPage.astro';
+import { PERSON, absolute, personId } from '../lib/seo';
+import headshotSrc from '../assets/life/hi.jpeg';
 
 const base = import.meta.env.BASE_URL.replace(/\/+$/, '');
 
-const homeUrl = Astro.site
-  ? new URL(Astro.url.pathname, Astro.site).href
-  : undefined;
-// WebSite schema tells Google the site's name (otherwise it guesses from the
-// domain); Person is the rich-result identity card.
+const homeUrl = absolute(Astro.url.pathname, Astro.site);
+const headshot = await getImage({ src: headshotSrc, width: 800, format: 'jpg' });
+
+// ProfilePage + Person is Google's markup for a page about one person; it
+// feeds the name's knowledge panel and gives AI answers a set of facts that
+// match the page. WebSite tells Google the site's name (otherwise it guesses
+// from the domain).
 const jsonLd = {
   '@graph': [
     {
       '@type': 'WebSite',
-      name: 'Derek Yao',
+      '@id': absolute(`${import.meta.env.BASE_URL}#website`, Astro.site),
+      name: PERSON.name,
+      alternateName: ["Derek Yao's website", 'derekOS'],
       url: homeUrl,
     },
     {
-      '@type': 'Person',
-      name: 'Derek Yao',
+      '@type': 'ProfilePage',
       url: homeUrl,
-      email: 'mailto:yaoderek06@gmail.com',
-      affiliation: {
-        '@type': 'CollegeOrUniversity',
-        name: 'University of Washington',
-      },
-      sameAs: [
-        'https://github.com/yaoderek',
-        'https://linkedin.com/in/yaoderek',
+      name: `${PERSON.name} — software engineer and artist`,
+      mainEntity: { '@id': personId(Astro.site) },
+    },
+    {
+      '@type': 'Person',
+      '@id': personId(Astro.site),
+      name: PERSON.name,
+      alternateName: PERSON.alternateName,
+      url: homeUrl,
+      image: absolute(headshot.src, Astro.site),
+      description: PERSON.summary,
+      jobTitle: PERSON.jobTitle,
+      email: `mailto:${PERSON.email}`,
+      worksFor: { '@type': 'Organization', name: 'Contour' },
+      affiliation: [
+        {
+          '@type': 'CollegeOrUniversity',
+          name: 'University of Washington',
+          sameAs: 'https://www.washington.edu',
+        },
+        { '@type': 'ResearchOrganization', name: 'UW Denolle Lab' },
+        { '@type': 'ResearchOrganization', name: 'UW GAIA-HazLab' },
       ],
+      knowsAbout: PERSON.knowsAbout,
+      sameAs: PERSON.sameAs,
     },
   ],
 };
@@ -35,13 +57,21 @@ const jsonLd = {
 
 <OsPage
   initialPath={null}
-  title="Derek Yao"
-  description="Derek Yao — projects, writing, art. A fake little Mac as a personal website."
+  title="Derek Yao — software engineer and artist at UW"
+  description="Derek Yao is a UW computer science and art student, software engineer at Contour, and researcher building AI research agents with UW's Denolle and GAIA labs."
   jsonLd={jsonLd}
+  ogType="profile"
 >
   <h1>Derek Yao</h1>
+  <img
+    src={headshot.src}
+    alt="Derek Yao"
+    width={headshot.attributes.width}
+    height={headshot.attributes.height}
+    loading="lazy"
+  />
   <p>
-    Hi, I'm Derek — working as a member of technical staff at Contour (backed
+    Hi, I'm Derek Yao — working as a member of technical staff at Contour (backed
     by Lightspeed, Chemistry) this summer. I'm a student at UW studying art
     and computer science. I've worked with Oracle on supply chain resilience
     and optimization, and I'm currently building agentic research systems with

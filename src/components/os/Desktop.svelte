@@ -777,7 +777,7 @@
   style:background-image={wallpaperUrl ? `url(${wallpaperUrl})` : undefined}
 >
   <!-- Skip-to-content: visually hidden until focused, then revealed.
-       Targets the top window (or no-js noscript content on SEO pages). -->
+       Targets the top window (or the static content on no-JS pages). -->
   <a
     class="skip-link"
     href="#main-content"
