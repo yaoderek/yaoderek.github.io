@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "scripts": {
     "dev": "astro dev",
-    "build": "astro build && node scripts/prune-orphans.mjs",
+    "build": "astro build && node scripts/prune-orphans.mjs && node scripts/check-indexable.mjs",
     "preview": "astro preview",
     "test": "vitest run"
   },

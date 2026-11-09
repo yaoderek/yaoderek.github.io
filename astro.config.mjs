@@ -9,8 +9,8 @@ export default defineConfig({
   site: 'https://yaoderek.github.io',
   integrations: [
     svelte(),
-    // The /personal/* pages are noindex redirect stubs for the old
-    // project-site URLs — keep them out of the sitemap.
+    // The /personal/* pages are redirect stubs for the old project-site
+    // URLs — keep them out of the sitemap.
     sitemap({ filter: (page) => !page.includes('/personal/') }),
   ],
   output: 'static',

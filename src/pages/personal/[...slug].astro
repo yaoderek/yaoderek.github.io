@@ -1,7 +1,11 @@
 ---
 // Redirect stubs for the old project-site URLs (yaoderek.github.io/personal/…)
-// after the move to the domain root. One noindex meta-refresh page per old
-// route, each pointing canonical at its new home so search engines transfer.
+// after the move to the domain root. One instant meta-refresh page per old
+// route, each pointing canonical at its new home. Google reads an instant
+// refresh as a permanent redirect and moves the old URL's links to the new
+// one. No noindex: on a redirect it's a conflicting signal, and Search Console
+// files the old URLs under "Excluded by 'noindex' tag" instead of "Page with
+// redirect".
 import { getCollection } from 'astro:content';
 
 export async function getStaticPaths() {
@@ -33,7 +37,6 @@ const target = new URL(slug ? `/${slug}/` : '/', Astro.site).href;
     <title>Redirecting…</title>
     <meta http-equiv="refresh" content={`0;url=${target}`} />
     <link rel="canonical" href={target} />
-    <meta name="robots" content="noindex" />
   </head>
   <body>
     <p>This page moved to <a href={target}>{target}</a>.</p>
