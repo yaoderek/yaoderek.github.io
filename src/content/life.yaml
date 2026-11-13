@@ -7,6 +7,19 @@
   medium: photo
   image: ../assets/life/taipei-metro.png
   place: { name: Taipei, lat: 25.0478, lng: 121.517 }
+- id: longshan-temple
+  title: Longshan Temple
+  # Same trip as the metro, so the same placeholder date.
+  created: 2025-08-09
+  medium: photo
+  image: ../assets/life/longshan-temple.jpeg
+  place: { name: Longshan Temple, lat: 25.0372, lng: 121.4999 }
+- id: keys-handstand
+  title: Handstand in the Keys
+  created: 2025-12-30
+  medium: photo
+  image: ../assets/life/keys-handstand.jpeg
+  place: { name: Florida Keys, lat: 24.7136, lng: -81.0904 }
 - id: granite-mountain
   title: Granite Mountain
   created: 2026-05-24
@@ -43,3 +56,10 @@
   created: 2026-09-09
   medium: photo
   image: ../assets/life/hi.jpeg
+- id: living-room-sunset
+  title: Living room sunset
+  created: 2026-11-12
+  medium: photo
+  image: ../assets/life/living-room-sunset.jpeg
+  # The neighbourhood, not the building: this map is public.
+  place: { name: U District, lat: 47.661, lng: -122.313 }
