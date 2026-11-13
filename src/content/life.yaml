@@ -1,12 +1,48 @@
 # The Photos app orders the library by `created`, oldest first.
-# Dates are placeholders where the real capture date wasn't known; the 2026
-# entries come from the files' own EXIF.
+# Dates come from each file's EXIF where it had one, and are marked as
+# placeholders where it didn't.
+- id: phoenix-saguaros
+  title: Saguaros
+  created: 2022-03-27
+  medium: photo
+  image: ../assets/life/phoenix-saguaros.jpeg
+  place: { name: "Desert Botanical Garden, Phoenix", lat: 33.4604, lng: -111.945 }
+- id: ut-austin
+  title: Longhorn hat
+  created: 2023-06-28
+  medium: photo
+  image: ../assets/life/ut-austin.jpeg
+  place: { name: UT Austin, lat: 30.2849, lng: -97.7341 }
+- id: west-fargo-pool
+  title: Underwater
+  created: 2023-07-25
+  medium: photo
+  image: ../assets/life/west-fargo-pool.jpeg
+  place: { name: "Hulbert Aquatic Center, West Fargo", lat: 46.8715, lng: -96.889 }
+- id: bainbridge-pool
+  title: Swim meet
+  created: 2023-11-04
+  medium: photo
+  image: ../assets/life/bainbridge-pool.jpeg
+  place: { name: Bainbridge Island, lat: 47.6379, lng: -122.5229 }
+- id: rochester-meet
+  title: Rochester meet
+  created: 2025-03-16
+  medium: photo
+  image: ../assets/life/rochester-meet.jpeg
+  place: { name: "Rochester Recreation Center, Minnesota", lat: 44.045, lng: -92.471 }
 - id: kyoto-bamboo
   title: Bamboo forest
   created: 2025-07-06
   medium: photo
   image: ../assets/life/kyoto-bamboo.jpeg
   place: { name: "Fukakusa, Kyoto", lat: 34.965, lng: 135.78 }
+- id: remlinger-concert
+  title: Concert
+  created: 2025-07-30
+  medium: photo
+  image: ../assets/life/remlinger-concert.jpeg
+  place: { name: "Remlinger Farms, Carnation", lat: 47.6399, lng: -121.9057 }
 - id: taipei-metro
   title: Taipei metro
   created: 2025-08-09
@@ -20,6 +56,13 @@
   medium: photo
   image: ../assets/life/longshan-temple.jpeg
   place: { name: Longshan Temple, lat: 25.0372, lng: 121.4999 }
+- id: the-bund
+  title: The Bund at night
+  # Placeholder: the file carried no capture date. Same summer as Taiwan.
+  created: 2025-08-12
+  medium: photo
+  image: ../assets/life/the-bund.jpeg
+  place: { name: "The Bund, Shanghai", lat: 31.24, lng: 121.4903 }
 - id: keys-handstand
   title: Handstand in the Keys
   created: 2025-12-30
@@ -45,6 +88,12 @@
   medium: photo
   image: ../assets/life/vancouver.jpeg
   place: { name: Vancouver, lat: 49.2827, lng: -123.1207 }
+- id: gas-works-jump
+  title: Jumping in
+  created: 2026-05-03
+  medium: photo
+  image: ../assets/life/gas-works-jump.jpeg
+  place: { name: Gas Works Park, lat: 47.6456, lng: -122.3344 }
 - id: granite-mountain
   title: Granite Mountain
   created: 2026-05-24
@@ -58,6 +107,12 @@
   medium: photo
   image: ../assets/life/handstand.jpeg
   place: { name: Gas Works Park, lat: 47.6456, lng: -122.3344 }
+- id: jules-pizza
+  title: Pizza
+  created: 2026-07-15
+  medium: photo
+  image: ../assets/life/jules-pizza.jpeg
+  place: { name: "Jules Pizza, San Francisco", lat: 37.7718, lng: -122.4305 }
 - id: el-capitan-summit
   title: El Capitan summit
   created: 2026-07-26
