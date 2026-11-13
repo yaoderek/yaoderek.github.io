@@ -19,6 +19,7 @@
   created: 2026-05-29
   medium: photo
   image: ../assets/life/handstand.jpeg
+  place: { name: Gas Works Park, lat: 47.6456, lng: -122.3344 }
 - id: el-capitan-summit
   title: El Capitan summit
   created: 2026-07-26
@@ -30,11 +31,13 @@
   created: 2026-08-03
   medium: photo
   image: ../assets/life/bowser.jpeg
+  place: { name: Universal Studios Hollywood, lat: 34.1381, lng: -118.3534 }
 - id: me
   title: Me
   created: 2026-08-24
   medium: photo
   image: ../assets/life/me.jpeg
+  place: { name: Griffith Observatory, lat: 34.1184, lng: -118.3004 }
 - id: hi
   title: hi!
   created: 2026-09-09
