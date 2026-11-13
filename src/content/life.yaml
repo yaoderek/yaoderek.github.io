@@ -1,136 +1,137 @@
 # The Photos app orders the library by `created`, oldest first.
 # Dates come from each file's EXIF where it had one, and are marked as
-# placeholders where it didn't.
+# placeholders where it didn't. Place names stay at the city: "Seattle, WA",
+# "Kyoto, Japan"; the pin's coordinates carry the exact spot.
 - id: phoenix-saguaros
   title: Saguaros
   created: 2022-03-27
   medium: photo
   image: ../assets/life/phoenix-saguaros.jpeg
-  place: { name: "Desert Botanical Garden, Phoenix", lat: 33.4604, lng: -111.945 }
+  place: { name: "Phoenix, AZ", lat: 33.4604, lng: -111.945 }
 - id: ut-austin
   title: Longhorn hat
   created: 2023-06-28
   medium: photo
   image: ../assets/life/ut-austin.jpeg
-  place: { name: UT Austin, lat: 30.2849, lng: -97.7341 }
+  place: { name: "Austin, TX", lat: 30.2849, lng: -97.7341 }
 - id: west-fargo-pool
   title: Underwater
   created: 2023-07-25
   medium: photo
   image: ../assets/life/west-fargo-pool.jpeg
-  place: { name: "Hulbert Aquatic Center, West Fargo", lat: 46.8715, lng: -96.889 }
+  place: { name: "West Fargo, ND", lat: 46.8715, lng: -96.889 }
 - id: bainbridge-pool
   title: Swim meet
   created: 2023-11-04
   medium: photo
   image: ../assets/life/bainbridge-pool.jpeg
-  place: { name: Bainbridge Island, lat: 47.6379, lng: -122.5229 }
+  place: { name: "Bainbridge Island, WA", lat: 47.6379, lng: -122.5229 }
 - id: rochester-meet
   title: Rochester meet
   created: 2025-03-16
   medium: photo
   image: ../assets/life/rochester-meet.jpeg
-  place: { name: "Rochester Recreation Center, Minnesota", lat: 44.045, lng: -92.471 }
+  place: { name: "Rochester, MN", lat: 44.045, lng: -92.471 }
 - id: kyoto-bamboo
   title: Bamboo forest
   created: 2025-07-06
   medium: photo
   image: ../assets/life/kyoto-bamboo.jpeg
-  place: { name: "Fukakusa, Kyoto", lat: 34.965, lng: 135.78 }
+  place: { name: "Kyoto, Japan", lat: 34.965, lng: 135.78 }
 - id: remlinger-concert
   title: Concert
   created: 2025-07-30
   medium: photo
   image: ../assets/life/remlinger-concert.jpeg
-  place: { name: "Remlinger Farms, Carnation", lat: 47.6399, lng: -121.9057 }
+  place: { name: "Carnation, WA", lat: 47.6399, lng: -121.9057 }
 - id: taipei-metro
   title: Taipei metro
   created: 2025-08-09
   medium: photo
   image: ../assets/life/taipei-metro.png
-  place: { name: Taipei, lat: 25.0478, lng: 121.517 }
+  place: { name: "Taipei, Taiwan", lat: 25.0478, lng: 121.517 }
 - id: longshan-temple
   title: Longshan Temple
   # Same trip as the metro, so the same placeholder date.
   created: 2025-08-09
   medium: photo
   image: ../assets/life/longshan-temple.jpeg
-  place: { name: Longshan Temple, lat: 25.0372, lng: 121.4999 }
+  place: { name: "Taipei, Taiwan", lat: 25.0372, lng: 121.4999 }
 - id: the-bund
   title: The Bund at night
   # Placeholder: the file carried no capture date. Same summer as Taiwan.
   created: 2025-08-12
   medium: photo
   image: ../assets/life/the-bund.jpeg
-  place: { name: "The Bund, Shanghai", lat: 31.24, lng: 121.4903 }
+  place: { name: "Shanghai, China", lat: 31.24, lng: 121.4903 }
 - id: keys-handstand
   title: Handstand in the Keys
   created: 2025-12-30
   medium: photo
   image: ../assets/life/keys-handstand.jpeg
-  place: { name: Florida Keys, lat: 24.7136, lng: -81.0904 }
+  place: { name: "Florida Keys, FL", lat: 24.7136, lng: -81.0904 }
 - id: capilano-dog
   title: Dog in the car
   created: 2026-02-26
   medium: photo
   image: ../assets/life/capilano-dog.jpeg
-  place: { name: Capilano Suspension Bridge, lat: 49.3429, lng: -123.1149 }
+  place: { name: "North Vancouver, BC", lat: 49.3429, lng: -123.1149 }
 - id: capilano-cliffwalk
   title: Cliffwalk
   created: 2026-04-15
   medium: photo
   image: ../assets/life/capilano-cliffwalk.jpeg
-  place: { name: Capilano Suspension Bridge, lat: 49.3429, lng: -123.1149 }
+  place: { name: "North Vancouver, BC", lat: 49.3429, lng: -123.1149 }
 - id: vancouver
   title: Vancouver
   # Placeholder: the file carried no capture date.
   created: 2026-04-15
   medium: photo
   image: ../assets/life/vancouver.jpeg
-  place: { name: Vancouver, lat: 49.2827, lng: -123.1207 }
+  place: { name: "Vancouver, BC", lat: 49.2827, lng: -123.1207 }
 - id: gas-works-jump
   title: Jumping in
   created: 2026-05-03
   medium: photo
   image: ../assets/life/gas-works-jump.jpeg
-  place: { name: Gas Works Park, lat: 47.6456, lng: -122.3344 }
+  place: { name: "Seattle, WA", lat: 47.6456, lng: -122.3344 }
 - id: granite-mountain
   title: Granite Mountain
   created: 2026-05-24
   medium: photo
   image: ../assets/life/granite-mountain.jpeg
   # From the photo's own GPS.
-  place: { name: Granite Mountain, lat: 47.4165, lng: -121.4809 }
+  place: { name: "Snoqualmie Pass, WA", lat: 47.4165, lng: -121.4809 }
 - id: handstand
   title: Handstand at night
   created: 2026-05-29
   medium: photo
   image: ../assets/life/handstand.jpeg
-  place: { name: Gas Works Park, lat: 47.6456, lng: -122.3344 }
+  place: { name: "Seattle, WA", lat: 47.6456, lng: -122.3344 }
 - id: jules-pizza
   title: Pizza
   created: 2026-07-15
   medium: photo
   image: ../assets/life/jules-pizza.jpeg
-  place: { name: "Jules Pizza, San Francisco", lat: 37.7718, lng: -122.4305 }
+  place: { name: "San Francisco, CA", lat: 37.7718, lng: -122.4305 }
 - id: el-capitan-summit
   title: El Capitan summit
   created: 2026-07-26
   medium: photo
   image: ../assets/life/el-capitan-summit.jpeg
-  place: { name: El Capitan, lat: 37.734, lng: -119.6377 }
+  place: { name: "Yosemite, CA", lat: 37.734, lng: -119.6377 }
 - id: bowser
   title: Bowser
   created: 2026-08-03
   medium: photo
   image: ../assets/life/bowser.jpeg
-  place: { name: Universal Studios Hollywood, lat: 34.1381, lng: -118.3534 }
+  place: { name: "Los Angeles, CA", lat: 34.1381, lng: -118.3534 }
 - id: me
   title: Me
   created: 2026-08-24
   medium: photo
   image: ../assets/life/me.jpeg
-  place: { name: Griffith Observatory, lat: 34.1184, lng: -118.3004 }
+  place: { name: "Los Angeles, CA", lat: 34.1184, lng: -118.3004 }
 - id: hi
   title: hi!
   created: 2026-09-09
@@ -141,5 +142,5 @@
   created: 2026-11-12
   medium: photo
   image: ../assets/life/living-room-sunset.jpeg
-  # The neighbourhood, not the building: this map is public.
-  place: { name: U District, lat: 47.661, lng: -122.313 }
+  # Pinned to the neighbourhood, not the building: this map is public.
+  place: { name: "Seattle, WA", lat: 47.661, lng: -122.313 }
