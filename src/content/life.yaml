@@ -1,6 +1,12 @@
 # The Photos app orders the library by `created`, oldest first.
 # Dates are placeholders where the real capture date wasn't known; the 2026
 # entries come from the files' own EXIF.
+- id: kyoto-bamboo
+  title: Bamboo forest
+  created: 2025-07-06
+  medium: photo
+  image: ../assets/life/kyoto-bamboo.jpeg
+  place: { name: "Fukakusa, Kyoto", lat: 34.965, lng: 135.78 }
 - id: taipei-metro
   title: Taipei metro
   created: 2025-08-09
@@ -20,6 +26,25 @@
   medium: photo
   image: ../assets/life/keys-handstand.jpeg
   place: { name: Florida Keys, lat: 24.7136, lng: -81.0904 }
+- id: capilano-dog
+  title: Dog in the car
+  created: 2026-02-26
+  medium: photo
+  image: ../assets/life/capilano-dog.jpeg
+  place: { name: Capilano Suspension Bridge, lat: 49.3429, lng: -123.1149 }
+- id: capilano-cliffwalk
+  title: Cliffwalk
+  created: 2026-04-15
+  medium: photo
+  image: ../assets/life/capilano-cliffwalk.jpeg
+  place: { name: Capilano Suspension Bridge, lat: 49.3429, lng: -123.1149 }
+- id: vancouver
+  title: Vancouver
+  # Placeholder: the file carried no capture date.
+  created: 2026-04-15
+  medium: photo
+  image: ../assets/life/vancouver.jpeg
+  place: { name: Vancouver, lat: 49.2827, lng: -123.1207 }
 - id: granite-mountain
   title: Granite Mountain
   created: 2026-05-24
