@@ -26,6 +26,7 @@ npm test          # run unit tests
 | Writing posts | Drop a `.md` file in `src/content/writing/` (frontmatter: `title`, `created`) |
 | Projects | Drop a `.md` file in `src/content/projects/` (frontmatter: `title`, `oneLiner`, `kind`, `status`, `created`, `stack` (array), `thumb`, `images` (array), optional `repo`, `demo`) |
 | Art entries | Edit `src/content/art.yaml` (fields: `id`, `title`, `created`, `medium`, `image`) |
+| Life photos | Edit `src/content/life.yaml` (same fields as art, plus optional `place: { name, lat, lng }` to pin it in Maps) |
 | Resume | Drop `public/resume.pdf` to enable the Résumé dock icon |
 
 ## Hosting

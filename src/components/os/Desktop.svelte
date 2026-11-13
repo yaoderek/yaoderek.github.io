@@ -5,6 +5,7 @@
   import { noteList, noteOrFirst } from '../../lib/os/notes';
   import { photoAlbums, photoAt, photoWindowSize } from '../../lib/os/photos';
   import { calendarIconUrl, experienceRoles } from '../../lib/os/calendar';
+  import { mapPins, type MapPin } from '../../lib/os/maps';
   import {
     pathForWin,
     urlToOpenPath,
@@ -37,6 +38,10 @@
   import PhotosWindow from './apps/PhotosWindow.svelte';
   import CalendarWindow from './apps/CalendarWindow.svelte';
   import TrashWindow from './apps/TrashWindow.svelte';
+  import MapsWindow from './apps/MapsWindow.svelte';
+  import MusicWindow from './apps/MusicWindow.svelte';
+  import PhotoBoothWindow from './apps/PhotoBoothWindow.svelte';
+  import Wallpaper from './Wallpaper.svelte';
 
   type Props = {
     tree: FSNode;
@@ -46,8 +51,9 @@
     showResume: boolean;
     // When true, open a "file not found" doc window after mount (404 page).
     notFound?: boolean;
-    // Optimized wallpaper URL (built by OsPage via astro:assets).
-    wallpaperUrl?: string | null;
+    // The dynamic wallpaper's frames, optimized, in frame order (built by
+    // OsPage via astro:assets). Wallpaper.svelte shows the one for the hour.
+    wallpaperFrames?: string[];
     // Real app-icon URLs for the dock (built by OsPage via astro:assets).
     dockIcons?: Record<string, string>;
   };
@@ -57,7 +63,7 @@
     initialPath = null,
     showResume,
     notFound = false,
-    wallpaperUrl = null,
+    wallpaperFrames = [],
     dockIcons = {},
   }: Props = $props();
 
@@ -143,6 +149,9 @@
     doc: { w: 640, h: 560 },
     photos: { w: 780, h: 680 },
     calendar: { w: 880, h: 560 },
+    maps: { w: 980, h: 620 },
+    music: { w: 820, h: 600 },
+    photobooth: { w: 760, h: 620 },
     finder: { w: 960, h: 560 },
     about: { w: 420, h: 260 },
     trash: { w: 480, h: 320 },
@@ -186,6 +195,9 @@
 
   // The roles the Calendar app puts on its timeline.
   const roles = $derived(experienceRoles(tree));
+
+  // The life photos that say where they were taken, for the Maps app.
+  const pins = $derived(mapPins(lifeAlbum?.items ?? []));
 
   // The dock's Calendar tile shows today's date, so it's drawn on mount rather
   // than built with the site.
@@ -501,6 +513,51 @@
     onMobileNavigate(path);
   }
 
+  // Apps with nothing in the filesystem: one window each, with no URL.
+  type StandaloneApp = 'maps' | 'music' | 'photobooth';
+
+  const APP_TITLES: Record<StandaloneApp, string> = {
+    maps: 'Maps',
+    music: 'Music',
+    photobooth: 'Photo Booth',
+  };
+
+  // Mobile has no windows, so these apps open as a full-screen sheet instead.
+  let mobileApp = $state<StandaloneApp | null>(null);
+
+  /** Open (or focus) the single window for Maps, Music, or Photo Booth. */
+  function openApp(app: StandaloneApp) {
+    if (isMobile) {
+      mobileApp = app;
+      return;
+    }
+    wins = open(
+      wins,
+      {
+        app,
+        title: APP_TITLES[app],
+        // Internal: open() dedupes on path, so a second click focuses it.
+        path: `/__${app}__`,
+        props: {},
+        w: SIZES[app].w,
+        h: SIZES[app].h,
+      },
+      viewport()
+    );
+  }
+
+  /** A place on the map opens its picture in Photos (the Files view on a phone). */
+  function openPhotoFromMap(pin: MapPin) {
+    if (isMobile) {
+      mobileApp = null;
+      const path = `/life/${pin.id}`;
+      mobileNavigateTo = path;
+      onMobileNavigate(path);
+      return;
+    }
+    openPhotos('life', pin.index);
+  }
+
   /** The résumé is a real PDF, so it opens in the browser's own viewer. */
   function openResume() {
     window.open(withBase('/resume.pdf', BASE), '_blank', 'noopener');
@@ -725,6 +782,27 @@
       running: openApps.has('calendar'),
       action: () => (isMobile ? openExperienceOnMobile() : openCalendar(null)),
     },
+    {
+      id: 'maps',
+      label: 'Maps',
+      iconUrl: dockIcons.maps,
+      running: openApps.has('maps'),
+      action: () => openApp('maps'),
+    },
+    {
+      id: 'music',
+      label: 'Music',
+      iconUrl: dockIcons.music,
+      running: openApps.has('music'),
+      action: () => openApp('music'),
+    },
+    {
+      id: 'photobooth',
+      label: 'Photo Booth',
+      iconUrl: dockIcons.photobooth,
+      running: openApps.has('photobooth'),
+      action: () => openApp('photobooth'),
+    },
     ...(showResume
       ? [{
           id: 'resume',
@@ -771,11 +849,9 @@
   ]);
 </script>
 
-<div
-  class="desktop"
-  class:theme-dark={darkMode}
-  style:background-image={wallpaperUrl ? `url(${wallpaperUrl})` : undefined}
->
+<div class="desktop" class:theme-dark={darkMode}>
+  <Wallpaper frames={wallpaperFrames} {reducedMotion} />
+
   <!-- Skip-to-content: visually hidden until focused, then revealed.
        Targets the top window (or the static content on no-JS pages). -->
   <a
@@ -827,6 +903,30 @@
         {reducedMotion}
       />
     </div>
+
+    {#if mobileApp}
+      <div class="mobile-sheet" role="dialog" aria-label={APP_TITLES[mobileApp]}>
+        <header class="sheet-bar">
+          <span class="sheet-title">{APP_TITLES[mobileApp]}</span>
+          <button class="sheet-done" onclick={() => (mobileApp = null)}>Done</button>
+        </header>
+        <div class="sheet-body">
+          {#if mobileApp === 'maps'}
+            <MapsWindow
+              {pins}
+              dark={darkMode}
+              {reducedMotion}
+              compact
+              onopenphoto={openPhotoFromMap}
+            />
+          {:else if mobileApp === 'music'}
+            <MusicWindow compact />
+          {:else}
+            <PhotoBoothWindow compact {reducedMotion} />
+          {/if}
+        </div>
+      </div>
+    {/if}
   {:else}
     <!-- id="main-content": target for the skip-to-content link -->
     <div id="main-content" class="windows-layer">
@@ -886,6 +986,12 @@
               {...win.props as ComponentProps<typeof CalendarWindow>}
               active={win.id === topId}
             />
+          {:else if win.app === 'maps'}
+            <MapsWindow {pins} dark={darkMode} {reducedMotion} onopenphoto={openPhotoFromMap} />
+          {:else if win.app === 'music'}
+            <MusicWindow />
+          {:else if win.app === 'photobooth'}
+            <PhotoBoothWindow {reducedMotion} />
           {:else if win.app === 'trash'}
             <TrashWindow />
           {/if}
@@ -950,6 +1056,45 @@
 
   .windows-layer > :global(*) {
     pointer-events: auto;
+  }
+
+  /* Maps, Music and Photo Booth on a phone: a sheet over the files view,
+     above the dock, closed with Done the way an iOS sheet is. */
+  .mobile-sheet {
+    position: fixed;
+    top: var(--menubar-h, 28px);
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 900;
+    display: flex;
+    flex-direction: column;
+    background: var(--win-bg);
+  }
+
+  .sheet-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    border-bottom: 0.5px solid var(--hairline);
+    font-family: var(--chrome-font);
+  }
+
+  .sheet-title {
+    font-weight: 600;
+  }
+
+  .sheet-done {
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  /* Clear of the dock, which floats over the bottom of the screen. */
+  .sheet-body {
+    flex: 1;
+    min-height: 0;
+    padding-bottom: 64px;
   }
 
   /* Mobile layer: fills the area below the menu bar and above the dock */

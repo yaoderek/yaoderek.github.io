@@ -48,6 +48,11 @@ const pieces = (name: string) =>
         created: z.coerce.date(),
         medium: z.string(),
         image: image(),
+        // Where it was taken, for the Maps app. Pictures without one stay
+        // off the map.
+        place: z
+          .object({ name: z.string(), lat: z.number(), lng: z.number() })
+          .optional(),
       }),
   });
 

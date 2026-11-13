@@ -129,6 +129,7 @@ export async function getTreeInput(
           imageUrl,
           width: img.width,
           height: img.height,
+          ...(entry.data.place ? { place: entry.data.place } : {}),
         };
       })
     );

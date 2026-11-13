@@ -3,7 +3,6 @@ import { getImage } from 'astro:assets';
 import type { ImageMetadata } from 'astro';
 import { getDesktopProps } from '../lib/os/tree-data';
 import Desktop from '../components/os/Desktop.svelte';
-import wallpaperSrc from '../assets/wallpaper.jpg';
 import finderIcon from '../assets/dock/finder.png';
 import notesIcon from '../assets/dock/notes.png';
 import photosIcon from '../assets/dock/photos.png';
@@ -11,6 +10,9 @@ import previewIcon from '../assets/dock/preview.png';
 import mailIcon from '../assets/dock/mail.png';
 import githubIcon from '../assets/dock/github.svg';
 import trashIcon from '../assets/dock/trash.png';
+import mapsIcon from '../assets/dock/maps.png';
+import musicIcon from '../assets/dock/music.png';
+import photoBoothIcon from '../assets/dock/photobooth.png';
 import { PERSON } from '../lib/seo';
 import '../styles/global.css';
 
@@ -35,20 +37,45 @@ const {
 } = Astro.props;
 
 const { tree, showResume } = await getDesktopProps();
-const wallpaper = await getImage({
-  src: wallpaperSrc,
-  format: 'webp',
-  width: 2560,
-  quality: 72,
-});
+// Apple's dynamic Big Sur wallpaper, one image per frame of the original
+// HEIC, in frame order; the desktop picks one by where the sun is.
+const wallpaperSources = Object.entries(
+  import.meta.glob<ImageMetadata>('../assets/wallpaper/big-sur-*.jpg', {
+    eager: true,
+    import: 'default',
+  })
+)
+  .sort(([a], [b]) => frameIndex(a) - frameIndex(b))
+  .map(([, src]) => src);
+function frameIndex(path: string) {
+  return Number(path.match(/big-sur-(\d+)\.jpg$/)?.[1]);
+}
+const wallpaperFrames = (
+  await Promise.all(
+    wallpaperSources.map((src) =>
+      getImage({ src, format: 'webp', width: 2560, quality: 72 })
+    )
+  )
+).map((image) => image.src);
 
 // Real app icons for the dock (PNGs extracted from macOS; GitHub's official
 // mark as SVG). webp keeps the alpha channel.
 const dockIcon = (src: ImageMetadata) =>
   getImage({ src, format: 'webp', width: 128 });
-const [finderI, notesI, photosI, previewI, mailI, trashI] = await Promise.all(
-  [finderIcon, notesIcon, photosIcon, previewIcon, mailIcon, trashIcon].map(dockIcon)
-);
+const [finderI, notesI, photosI, previewI, mailI, trashI, mapsI, musicI, photoBoothI] =
+  await Promise.all(
+    [
+      finderIcon,
+      notesIcon,
+      photosIcon,
+      previewIcon,
+      mailIcon,
+      trashIcon,
+      mapsIcon,
+      musicIcon,
+      photoBoothIcon,
+    ].map(dockIcon)
+  );
 const dockIcons = {
   finder: finderI.src,
   notes: notesI.src,
@@ -57,6 +84,9 @@ const dockIcons = {
   mail: mailI.src,
   github: githubIcon.src,
   trash: trashI.src,
+  maps: mapsI.src,
+  music: musicI.src,
+  photobooth: photoBoothI.src,
 };
 const base = import.meta.env.BASE_URL.replace(/\/+$/, '');
 const canonicalUrl = Astro.site
@@ -142,7 +172,7 @@ const ogVideoAbsolute = ogImage ? null : absolute(`${base}/intro.mp4`);
       initialPath={initialPath}
       showResume={showResume}
       notFound={notFound}
-      wallpaperUrl={wallpaper.src}
+      wallpaperFrames={wallpaperFrames}
       dockIcons={dockIcons}
     />
     <!-- The page's content as plain HTML, in the document rather than in

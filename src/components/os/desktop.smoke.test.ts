@@ -170,6 +170,8 @@ const photoItems = [
     medium: 'photo',
     width: 1600,
     height: 1200,
+    // The one picture on the map.
+    place: { name: 'Taipei', lat: 25.05, lng: 121.52 },
   },
   {
     id: 'hi',
@@ -840,6 +842,165 @@ test('mobile: legacy hash deep-link #projects/speakeasy shows speakeasy content'
   target.remove();
 
   // Restore the matchMedia stub to the non-mobile default for subsequent tests.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (window as any).matchMedia = () => ({
+    matches: false,
+    addEventListener() {},
+    removeEventListener() {},
+  });
+});
+
+/** Mount the desktop on a deep link, so only a dock click opens anything new. */
+async function mountDesktop(tree: FSNode = lifeTree) {
+  const target = document.createElement('div');
+  document.body.appendChild(target);
+  const app = mount(Desktop, {
+    target,
+    props: { tree, initialPath: '/intro', showResume: false },
+  });
+  await new Promise((r) => setTimeout(r, 50));
+  return { target, app };
+}
+
+async function clickDock(target: HTMLElement, label: string) {
+  const button = target.querySelector<HTMLButtonElement>(`button[aria-label="${label}"]`);
+  expect(button).not.toBeNull();
+  button!.click();
+  await new Promise((r) => setTimeout(r, 30));
+}
+
+const windowNamed = (target: HTMLElement, name: string) =>
+  target.querySelectorAll(`[role="dialog"][aria-label="${name}"]`);
+
+test('the Maps dock icon opens Maps, listing the pictures that have a place', async () => {
+  const { target, app } = await mountDesktop();
+  await clickDock(target, 'Maps');
+
+  const maps = windowNamed(target, 'Maps');
+  expect(maps).toHaveLength(1);
+  // Only the picture with a place is listed; the map itself needs WebGL,
+  // which the test DOM doesn't have, and says so instead of breaking.
+  expect(maps[0].textContent).toContain('Taipei');
+  expect(maps[0].textContent).not.toContain('Lake Union');
+  expect(maps[0].textContent).toContain('The map can’t load here.');
+
+  // A second click focuses the one window rather than opening another.
+  await clickDock(target, 'Maps (open)');
+  expect(windowNamed(target, 'Maps')).toHaveLength(1);
+
+  unmount(app);
+  target.remove();
+});
+
+test('a place in Maps opens its picture in Photos', async () => {
+  const { target, app } = await mountDesktop();
+  await clickDock(target, 'Maps');
+
+  const place = [...windowNamed(target, 'Maps')[0].querySelectorAll('button')].find((b) =>
+    b.textContent?.includes('Taipei metro')
+  );
+  place!.click();
+  await new Promise((r) => setTimeout(r, 20));
+
+  const open = [...windowNamed(target, 'Maps')[0].querySelectorAll('button')].find(
+    (b) => b.textContent === 'Open in Photos'
+  );
+  expect(open).toBeDefined();
+  open!.click();
+  await new Promise((r) => setTimeout(r, 30));
+
+  const photos = windowNamed(target, 'Photos');
+  expect(photos).toHaveLength(1);
+  expect(photos[0].textContent).toContain('Taipei metro');
+
+  unmount(app);
+  target.remove();
+});
+
+test('the Music dock icon opens Music on the Spotify playlist', async () => {
+  const { target, app } = await mountDesktop();
+  await clickDock(target, 'Music');
+
+  const music = windowNamed(target, 'Music');
+  expect(music).toHaveLength(1);
+  const player = music[0].querySelector('iframe');
+  expect(player?.getAttribute('src')).toContain(
+    'open.spotify.com/embed/playlist/3aUJ6pw0ZNxKKChmOABrU2'
+  );
+
+  unmount(app);
+  target.remove();
+});
+
+test('Photo Booth opens, and says so when there is no camera', async () => {
+  const { target, app } = await mountDesktop();
+  await clickDock(target, 'Photo Booth');
+
+  const booth = windowNamed(target, 'Photo Booth');
+  expect(booth).toHaveLength(1);
+  // The test DOM has no camera API, like a browser that won't share one.
+  expect(booth[0].textContent).toContain('No camera available.');
+  expect(booth[0].querySelector<HTMLButtonElement>('button[aria-label="Take Photo"]')!.disabled).toBe(
+    true
+  );
+
+  unmount(app);
+  target.remove();
+});
+
+test('Photo Booth turns the camera off when its window closes', async () => {
+  const stopped: string[] = [];
+  const track = { stop: () => stopped.push('video') };
+  const stream = { getTracks: () => [track] };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (navigator as any).mediaDevices = { getUserMedia: async () => stream };
+  const play = HTMLMediaElement.prototype.play;
+  HTMLMediaElement.prototype.play = async () => {};
+
+  const { target, app } = await mountDesktop();
+  await clickDock(target, 'Photo Booth');
+  const booth = windowNamed(target, 'Photo Booth')[0];
+  expect(booth.querySelector('canvas[aria-label="Camera"]')).not.toBeNull();
+
+  booth.querySelector<HTMLButtonElement>('button[aria-label="Close"]')!.click();
+  await new Promise((r) => setTimeout(r, 30));
+  expect(windowNamed(target, 'Photo Booth')).toHaveLength(0);
+  expect(stopped).toEqual(['video']);
+
+  unmount(app);
+  target.remove();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  delete (navigator as any).mediaDevices;
+  HTMLMediaElement.prototype.play = play;
+});
+
+test('mobile: Maps, Music and Photo Booth open as a sheet that Done closes', async () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (window as any).matchMedia = (query: string) => ({
+    matches: query.includes('max-width'),
+    addEventListener() {},
+    removeEventListener() {},
+  });
+  const target = document.createElement('div');
+  document.body.appendChild(target);
+  const app = mount(Desktop, {
+    target,
+    props: { tree: lifeTree, initialPath: null, showResume: false },
+  });
+  await new Promise((r) => setTimeout(r, 50));
+
+  for (const label of ['Maps', 'Music', 'Photo Booth']) {
+    await clickDock(target, label);
+    const sheet = windowNamed(target, label);
+    expect(sheet).toHaveLength(1);
+    const done = [...sheet[0].querySelectorAll('button')].find((b) => b.textContent === 'Done');
+    done!.click();
+    await new Promise((r) => setTimeout(r, 20));
+    expect(windowNamed(target, label)).toHaveLength(0);
+  }
+
+  unmount(app);
+  target.remove();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   (window as any).matchMedia = () => ({
     matches: false,

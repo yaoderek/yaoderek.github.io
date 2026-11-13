@@ -4,8 +4,14 @@ export type AppId =
   | 'doc'
   | 'photos'
   | 'calendar'
+  | 'maps'
+  | 'music'
+  | 'photobooth'
   | 'about'
   | 'trash';
+
+/** A spot on the map: where a picture was taken. */
+export type Place = { name: string; lat: number; lng: number };
 
 /**
  * A note in the Notes app: the introduction and everything under /writing.
@@ -48,6 +54,7 @@ export type PhotoItem = {
   imageUrl: string;
   width: number;
   height: number;
+  place?: Place;
 };
 
 /** The glyphs Icon.svelte draws for a filesystem node. */

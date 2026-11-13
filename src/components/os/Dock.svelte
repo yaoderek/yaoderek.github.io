@@ -39,6 +39,34 @@
       ? window.matchMedia('(hover: none)').matches
       : false;
 
+  // A phone has room for fewer 44px icons than the dock holds, so there they
+  // shrink to fit the screen, down to a size that's still easy to tap; past
+  // that the dock scrolls sideways.
+  const ICON = 44;
+  const MIN_PHONE_ICON = 30;
+  const PHONE_GAP = 2;
+  // The shelf's padding and border, plus the 8px it keeps from each edge.
+  const PHONE_CHROME = 38;
+  let viewportW = $state(typeof window !== 'undefined' ? window.innerWidth : 1024);
+  $effect(() => {
+    const onResize = () => (viewportW = window.innerWidth);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  });
+  const iconSize = $derived(
+    isMobile
+      ? Math.max(
+          MIN_PHONE_ICON,
+          Math.min(
+            ICON,
+            Math.floor(
+              (viewportW - PHONE_CHROME - PHONE_GAP * (items.length - 1)) / items.length
+            )
+          )
+        )
+      : ICON
+  );
+
   // Per-icon scale (keyed by index across all sections)
   // sections: items + minimized + trailing
   // Fix 3: derive count reactively so new minimized icons always have a scale slot
@@ -81,6 +109,9 @@
       case 'doc': return appIcons.notes;
       case 'photos': return appIcons.photos;
       case 'calendar': return appIcons.calendar;
+      case 'maps': return appIcons.maps;
+      case 'music': return appIcons.music;
+      case 'photobooth': return appIcons.photobooth;
       default: return appIcons.notes;
     }
   }
@@ -95,11 +126,11 @@
   onpointerleave={onDockLeave}
   onpointermove={onDockPointerMove}
 >
-  <nav class="dock" aria-label="Dock">
+  <nav class="dock" class:phone={isMobile} aria-label="Dock" style:--icon={`${iconSize}px`}>
     <!-- Main items -->
     {#each items as item, i (item.id)}
       {@const scale = scales[i] ?? 1}
-      <div class="icon-slot" style:width={`${44 * scale}px`}>
+      <div class="icon-slot" style:width={`${iconSize * scale}px`}>
         <button
           class="icon-btn"
           style:transform={`scale(${scale})`}
@@ -125,7 +156,7 @@
       {#each minimized as win, mi (win.id)}
         {@const idx = items.length + mi}
         {@const scale = scales[idx] ?? 1}
-        <div class="icon-slot" style:width={`${44 * scale}px`}>
+        <div class="icon-slot" style:width={`${iconSize * scale}px`}>
           <button
             class="icon-btn minimized-win"
             style:transform={`scale(${scale})`}
@@ -150,7 +181,7 @@
       {#each trailing as item, ti (item.id)}
         {@const idx = items.length + minimized.length + ti}
         {@const scale = scales[idx] ?? 1}
-        <div class="icon-slot" style:width={`${44 * scale}px`}>
+        <div class="icon-slot" style:width={`${iconSize * scale}px`}>
           <button
             class="icon-btn"
             style:transform={`scale(${scale})`}
@@ -215,14 +246,21 @@
     user-select: none;
   }
 
+  .dock.phone {
+    gap: 2px;
+    max-width: calc(100vw - 16px);
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
   /* Icon slot: holds the icon with dynamic layout width */
   .icon-slot {
     position: relative;
     display: flex;
     align-items: flex-end;
     justify-content: center;
-    width: 44px;
-    height: 44px;
+    width: var(--icon, 44px);
+    height: var(--icon, 44px);
     flex-shrink: 0;
   }
 
@@ -238,8 +276,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 44px;
-    height: 44px;
+    width: var(--icon, 44px);
+    height: var(--icon, 44px);
     padding: 0;
     border: none;
     background: none;
@@ -258,8 +296,8 @@
   }
 
   .app-icon {
-    width: 44px;
-    height: 44px;
+    width: var(--icon, 44px);
+    height: var(--icon, 44px);
     display: block;
     -webkit-user-drag: none;
   }
