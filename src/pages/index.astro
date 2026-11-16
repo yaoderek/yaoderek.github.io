@@ -38,7 +38,6 @@ const jsonLd = {
       description: PERSON.summary,
       jobTitle: PERSON.jobTitle,
       email: `mailto:${PERSON.email}`,
-      worksFor: { '@type': 'Organization', name: 'Contour' },
       affiliation: [
         {
           '@type': 'CollegeOrUniversity',
@@ -58,7 +57,7 @@ const jsonLd = {
 <OsPage
   initialPath={null}
   title="Derek Yao — software engineer and artist at UW"
-  description="Derek Yao is a UW computer science and art student, software engineer at Contour, and researcher building AI research agents with UW's Denolle and GAIA labs."
+  description="Derek Yao: UW computer science and art student, incoming software engineering intern at Stripe, previously at Contour, building AI research agents at UW."
   jsonLd={jsonLd}
   ogType="profile"
 >
@@ -71,8 +70,9 @@ const jsonLd = {
     loading="lazy"
   />
   <p>
-    Hi, I'm Derek Yao — working as a member of technical staff at Contour (backed
-    by Lightspeed, Chemistry) this summer. I'm a student at UW studying art
+    Hi, I'm Derek Yao. This winter I'll be a software engineering intern at
+    Stripe; last summer I was a member of technical staff at Contour (backed by
+    Lightspeed, Chemistry). I'm a student at UW studying art
     and computer science. I've worked with Oracle on supply chain resilience
     and optimization, and I'm currently building agentic research systems with
     the Denolle and GAIA labs at UW.

@@ -10,7 +10,7 @@ export const PERSON = {
   alternateName: 'yaoderek',
   jobTitle: 'Software Engineer',
   summary:
-    'Derek Yao is a University of Washington student in computer science and art, a software engineer at Contour, and a researcher building AI research agents with the UW Denolle and GAIA labs.',
+    'Derek Yao is a University of Washington student in computer science and art, an incoming software engineering intern at Stripe (previously at Contour), and a researcher building AI research agents with the UW Denolle and GAIA labs.',
   email: 'yaoderek06@gmail.com',
   sameAs: ['https://github.com/yaoderek', 'https://www.linkedin.com/in/yaoderek'],
   knowsAbout: [

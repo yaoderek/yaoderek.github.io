@@ -6,6 +6,7 @@
   role: Software engineering intern
   calendar: work
   start: 2026-06-01
+  end: 2026-08-31
   highlights:
     - Shipped real-time bidirectional Linear sync processing 20K+ task statuses across 12+ live customer deployments
     - Scaled meeting bot infra to 120K webhooks/hr with concurrency, turn-level streaming, and calendar syncs
