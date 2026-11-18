@@ -1,4 +1,7 @@
 ---
+import fs from 'node:fs';
+import path from 'node:path';
+import { createHash } from 'node:crypto';
 import { getImage } from 'astro:assets';
 import type { ImageMetadata } from 'astro';
 import { getDesktopProps } from '../lib/os/tree-data';
@@ -89,6 +92,17 @@ const dockIcons = {
   photobooth: photoBoothI.src,
 };
 const base = import.meta.env.BASE_URL.replace(/\/+$/, '');
+
+// Browsers keep favicons in a cache of their own, keyed by URL and deaf to
+// the server's cache headers, so a new icon at the same URL can go unseen for
+// weeks. Tagging each URL with a hash of the file gives a new icon a new URL.
+const icon = (file: string) => {
+  const hash = createHash('sha1')
+    .update(fs.readFileSync(path.join(process.cwd(), 'public', file)))
+    .digest('hex')
+    .slice(0, 8);
+  return `${base}/${file}?v=${hash}`;
+};
 const canonicalUrl = Astro.site
   ? new URL(Astro.url.pathname, Astro.site)
   : null;
@@ -119,9 +133,9 @@ const ogVideoAbsolute = ogImage ? null : absolute(`${base}/intro.mp4`);
     <meta name="author" content={PERSON.name} />
     {PERSON.sameAs.map((href) => <link rel="me" href={href} />)}
     {canonicalHref && <link rel="canonical" href={canonicalHref} />}
-    <link rel="icon" type="image/svg+xml" href={`${base}/favicon.svg`} />
-    <link rel="icon" type="image/png" sizes="96x96" href={`${base}/favicon-96x96.png`} />
-    <link rel="apple-touch-icon" href={`${base}/apple-touch-icon.png`} />
+    <link rel="icon" type="image/svg+xml" href={icon('favicon.svg')} />
+    <link rel="icon" type="image/png" sizes="96x96" href={icon('favicon-96x96.png')} />
+    <link rel="apple-touch-icon" href={icon('apple-touch-icon.png')} />
 
     <meta property="og:site_name" content="Derek Yao" />
     <meta property="og:title" content={title} />
