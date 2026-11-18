@@ -81,7 +81,7 @@ function spring(p, v, target, { omega, zeta }) {
   p[0] += v[0] * DT; p[1] += v[1] * DT;
 }
 
-function simulate(targets) {
+export function simulate(targets) {
   const start = targets[0];
   // both already moving toward the second target as the pen lands
   const lead = [(targets[1][0] - start[0]) * 3, (targets[1][1] - start[1]) * 3];
@@ -105,10 +105,13 @@ function simulate(targets) {
   return out;
 }
 
+/** A target from WORDS in page space: slanted, narrowed, y flipped to point down. */
+export const toPage = ([px, py, c]) => [px * NARROW + py * SLANT, -py, !!c];
+
 export function signatureStrokes() {
   // slant and narrow the targets (y flipped to screen space), then let the
   // hand draw through them
-  const strokes = WORDS.map((w) => simulate(humanise(w).map(([px, py, c]) => [px * NARROW + py * SLANT, -py, !!c])));
+  const strokes = WORDS.map((w) => simulate(humanise(w).map(toPage)));
 
   let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
   for (const s of strokes) for (const [px, py] of s) {
