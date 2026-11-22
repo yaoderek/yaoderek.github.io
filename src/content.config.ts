@@ -15,6 +15,12 @@ const projects = defineCollection({
       images: z.array(image()),
       repo: z.string().url().optional(),
       demo: z.string().url().optional(),
+      // schema.org type for the project's structured data (default
+      // CreativeWork), e.g. VideoGame for a game people can play.
+      schemaType: z.string().optional(),
+      // The `@id` the project's own site gives it in its structured data, so
+      // this page and that site describe one entity rather than two.
+      entityId: z.string().url().optional(),
     }),
 });
 

@@ -1,7 +1,7 @@
 ---
 import { getImage } from 'astro:assets';
 import OsPage from '../layouts/OsPage.astro';
-import { PERSON, absolute, personId } from '../lib/seo';
+import { PERSON, WORKS, absolute, personId } from '../lib/seo';
 import headshotSrc from '../assets/life/hi.jpeg';
 
 const base = import.meta.env.BASE_URL.replace(/\/+$/, '');
@@ -50,6 +50,20 @@ const jsonLd = {
       knowsAbout: PERSON.knowsAbout,
       sameAs: PERSON.sameAs,
     },
+    // What he's made that lives on its own site, credited to him by @id.
+    ...WORKS.map((work) => ({
+      '@type': work.type,
+      '@id': work.id,
+      name: work.name,
+      url: work.url,
+      description: work.description,
+      subjectOf: {
+        '@type': 'WebPage',
+        url: absolute(`${import.meta.env.BASE_URL}${work.page}`, Astro.site),
+      },
+      author: { '@id': personId(Astro.site) },
+      creator: { '@id': personId(Astro.site) },
+    })),
   ],
 };
 ---
@@ -57,7 +71,7 @@ const jsonLd = {
 <OsPage
   initialPath={null}
   title="Derek Yao — software engineer and artist at UW"
-  description="Derek Yao: UW computer science and art student, incoming software engineering intern at Stripe, previously at Contour, building AI research agents at UW."
+  description="Derek Yao: UW computer science and art student, incoming software engineering intern at Stripe, previously at Contour, and maker of Little City, a hand-drawn city builder."
   jsonLd={jsonLd}
   ogType="profile"
 >
@@ -76,6 +90,11 @@ const jsonLd = {
     and computer science. I've worked with Oracle on supply chain resilience
     and optimization, and I'm currently building agentic research systems with
     the Denolle and GAIA labs at UW.
+  </p>
+  <p>
+    I also made <a href="https://littlecity.io/">Little City</a>, a peaceful,
+    hand-drawn city builder you can play free in your browser
+    (<a href={`${base}/projects/little-city`}>more about it</a>).
   </p>
   <p>This site is a fake little Mac.</p>
   <ul>

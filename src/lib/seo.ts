@@ -10,7 +10,7 @@ export const PERSON = {
   alternateName: 'yaoderek',
   jobTitle: 'Software Engineer',
   summary:
-    'Derek Yao is a University of Washington student in computer science and art, an incoming software engineering intern at Stripe (previously at Contour), and a researcher building AI research agents with the UW Denolle and GAIA labs.',
+    'Derek Yao is a University of Washington student in computer science and art, an incoming software engineering intern at Stripe (previously at Contour), a researcher building AI research agents with the UW Denolle and GAIA labs, and the maker of Little City (littlecity.io), a peaceful, hand-drawn city builder you play in your browser.',
   email: 'yaoderek06@gmail.com',
   sameAs: ['https://github.com/yaoderek', 'https://www.linkedin.com/in/yaoderek'],
   knowsAbout: [
@@ -20,8 +20,25 @@ export const PERSON = {
     'AI agents',
     'Edge inference',
     'Digital art',
+    'Game development',
   ],
 };
+
+/**
+ * Things Derek made that live on their own sites. Each `id` is the `@id` that
+ * site gives the work in its own structured data, so the home page's
+ * "Derek made this" and the site's own description land on one entity.
+ */
+export const WORKS = [
+  {
+    id: 'https://littlecity.io/#game',
+    type: 'VideoGame',
+    name: 'Little City',
+    url: 'https://littlecity.io/',
+    description: 'A peaceful, hand-drawn city builder you play free in your browser.',
+    page: 'projects/little-city/',
+  },
+];
 
 /** Absolute URL for a site path, or undefined when `site` isn't configured. */
 export function absolute(path: string, site: URL | undefined): string | undefined {

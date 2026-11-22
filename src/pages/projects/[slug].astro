@@ -22,19 +22,52 @@ const ogImage = thumb.src;
 
 const base = import.meta.env.BASE_URL.replace(/\/+$/, '');
 
-const jsonLd = {
-  '@type': 'CreativeWork',
+const pageUrl = absolute(Astro.url.pathname, Astro.site);
+const elsewhere = [data.demo, data.repo].filter(Boolean) as string[];
+
+// The work itself. A project with a live site of its own takes that site's
+// `@id` and URL, so search engines merge this page's facts (Derek made it)
+// into the same entity the project's site describes, and this page reads as
+// a page *about* it.
+const work = {
+  '@type': data.schemaType ?? 'CreativeWork',
+  ...(data.entityId ? { '@id': data.entityId } : {}),
   name: data.title,
   headline: data.title,
   description: data.oneLiner,
   genre: data.kind,
   keywords: data.stack.join(', '),
   dateCreated: data.created.toISOString().slice(0, 10),
-  url: absolute(Astro.url.pathname, Astro.site),
+  url: data.demo ?? pageUrl,
   image: absolute(ogImage, Astro.site),
+  author: personRef(Astro.site),
   creator: personRef(Astro.site),
-  ...(data.repo ? { sameAs: data.repo } : {}),
+  ...(elsewhere.length ? { sameAs: elsewhere } : {}),
+  ...(data.schemaType === 'VideoGame'
+    ? {
+        gamePlatform: 'Web browser',
+        applicationCategory: 'Game',
+        operatingSystem: 'Any',
+        isAccessibleForFree: true,
+        offers: { '@type': 'Offer', price: 0, priceCurrency: 'USD' },
+      }
+    : {}),
 };
+
+const jsonLd = data.demo
+  ? {
+      '@graph': [
+        work,
+        {
+          '@type': 'WebPage',
+          url: pageUrl,
+          name: `${data.title} — Derek Yao`,
+          about: data.entityId ? { '@id': data.entityId } : work,
+          author: personRef(Astro.site),
+        },
+      ],
+    }
+  : { ...work, url: pageUrl };
 
 const meta: [string, string][] = [
   ['Stack', data.stack.join(', ')],
