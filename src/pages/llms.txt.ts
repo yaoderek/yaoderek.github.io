@@ -45,7 +45,11 @@ export const GET: APIRoute = async ({ site }) => {
     '',
     ...projects
       .sort(newest)
-      .map(({ id, data }) => `- [${data.title}](${url(`projects/${id}/`)}): ${data.oneLiner}`),
+      .map(
+        ({ id, data }) =>
+          `- [${data.title}](${url(`projects/${id}/`)}): ${data.oneLiner}` +
+          (data.demo ? `. Live at ${data.demo}` : '')
+      ),
     '',
     '## Writing',
     '',

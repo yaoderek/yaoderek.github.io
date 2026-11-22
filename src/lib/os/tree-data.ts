@@ -12,6 +12,7 @@ import { buildTree } from './fs';
 const INTRO_HTML = `<p>I'm Derek.</p>
 <p>This winter I'll be a software engineering intern at Stripe. Last summer I was a member of technical staff at Contour (backed by Lightspeed, Chemistry).</p>
 <p>I'm a student at UW studying art and computer science. I've worked with Oracle on supply chain resilience and optimization, and I'm currently building agentic research systems with the Denolle and GAIA labs at UW.</p>
+<p>I also made <a href="https://littlecity.io/" target="_blank" rel="noopener">Little City</a>, a peaceful, hand-drawn city builder you can play in your browser.</p>
 <dl class="contact">
   <div><dt>email</dt><dd><a href="mailto:yaoderek06@gmail.com">yaoderek06@gmail.com</a></dd></div>
   <div><dt>phone</dt><dd><a href="tel:+14255223218">425-522-3218</a></dd></div>
