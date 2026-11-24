@@ -9,6 +9,8 @@
     // True when the app has a window open — draws the dot under the icon.
     running?: boolean;
     action: () => void;
+    // Called when the pointer or focus reaches the icon, ahead of any click.
+    onapproach?: () => void;
   };
 
   type Props = {
@@ -135,6 +137,8 @@
           class="icon-btn"
           style:transform={`scale(${scale})`}
           onclick={item.action}
+          onpointerenter={item.onapproach}
+          onfocus={item.onapproach}
           title={item.label}
           aria-label={item.running ? `${item.label} (open)` : item.label}
           bind:this={iconRefs[i]}

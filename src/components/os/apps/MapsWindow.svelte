@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import type { Map as MapView, StyleSpecification } from 'maplibre-gl';
   import { appleMapStyle, pinBounds, type MapPin } from '../../../lib/os/maps';
+  import { canDrawMap, loadMap } from '../../../lib/os/map-assets';
   import { formatDate } from '../../../lib/os/format';
 
   type Props = {
@@ -17,16 +18,17 @@
   let { pins, dark = false, reducedMotion = false, compact = false, onopenphoto }: Props =
     $props();
 
-  // OpenFreeMap: OpenStreetMap vector tiles, free and keyless. The style is
-  // fetched once and repainted in Apple's colours (and again on a theme flip).
-  const STYLE_URL = 'https://tiles.openfreemap.org/styles/liberty';
   // Before there are any pins to frame: the Pacific Northwest.
   const FALLBACK_CENTER: [number, number] = [-122.33, 47.61];
   // How close a picked place flies in to.
   const PLACE_ZOOM = 11;
+  // A 3x phone would draw over twice the pixels of a 2x one, to no visible end.
+  const MAX_PIXEL_RATIO = 2;
 
   let container: HTMLDivElement;
   let map: MapView | null = null;
+  // The style as OpenFreeMap sends it, repainted in Apple's colours (and again
+  // on a theme flip).
   let baseStyle: StyleSpecification | null = null;
   let paintedDark: boolean | null = null;
   const pinEls: Record<string, HTMLElement> = {};
@@ -85,7 +87,8 @@
     button.className = 'maps-pin';
     button.setAttribute('aria-label', `${pin.title}, ${pin.place.name}`);
     const img = document.createElement('img');
-    img.src = pin.imageUrl;
+    img.src = pin.thumbUrl;
+    img.decoding = 'async';
     img.alt = '';
     img.draggable = false;
     button.append(img);
@@ -109,28 +112,20 @@
     const wantDark = dark;
     if (!map || !baseStyle || paintedDark === wantDark) return;
     paintedDark = wantDark;
-    map.setStyle(appleMapStyle(baseStyle, wantDark));
+    map.setStyle(appleMapStyle(baseStyle, wantDark), { validate: false });
   });
 
   onMount(() => {
     let destroyed = false;
-    let resizer: ResizeObserver | null = null;
 
     (async () => {
       // No WebGL (or a test DOM): no map, but the places list still works.
-      if (typeof WebGLRenderingContext === 'undefined') {
+      if (!canDrawMap()) {
         status = 'failed';
         return;
       }
       try {
-        const [{ default: maplibregl }, style] = await Promise.all([
-          import('maplibre-gl'),
-          fetch(STYLE_URL).then((r) => {
-            if (!r.ok) throw new Error(`style ${r.status}`);
-            return r.json() as Promise<StyleSpecification>;
-          }),
-          import('maplibre-gl/dist/maplibre-gl.css'),
-        ]);
+        const { maplibregl, style } = await loadMap();
         if (destroyed) return;
 
         baseStyle = style;
@@ -145,6 +140,11 @@
           // Credit stays on screen, but small, where Apple puts its Legal link.
           attributionControl: false,
           maxPitch: 70,
+          // Set only to cap it: unset, MapLibre follows the window from one
+          // display to another.
+          ...(window.devicePixelRatio > MAX_PIXEL_RATIO ? { pixelRatio: MAX_PIXEL_RATIO } : {}),
+          // The style is OpenFreeMap's own; checking it again takes time.
+          validateStyle: false,
         });
         map.addControl(
           new maplibregl.NavigationControl({ visualizePitch: true }),
@@ -159,11 +159,6 @@
             .addTo(map);
         }
         map.on('load', () => (status = 'ready'));
-
-        // The window resizes without the browser window doing so, which is
-        // the only resize MapLibre listens for on its own.
-        resizer = new ResizeObserver(() => map?.resize());
-        resizer.observe(container);
       } catch {
         if (!destroyed) status = 'failed';
       }
@@ -171,7 +166,6 @@
 
     return () => {
       destroyed = true;
-      resizer?.disconnect();
       map?.remove();
       map = null;
     };
@@ -214,7 +208,7 @@
         {#each shown as pin (pin.id)}
           <li>
             <button class="place" onclick={() => select(pin.id)}>
-              <img src={pin.imageUrl} alt="" />
+              <img src={pin.thumbUrl} alt="" decoding="async" />
               <span class="text">
                 <span class="name">{pin.place.name}</span>
                 <span class="detail">{detail(pin)}</span>
@@ -427,7 +421,9 @@
     pointer-events: none;
   }
 
-  /* Apple's 3D button, top right of the map. */
+  /* Apple's 3D button, top right of the map. No backdrop blur here or on the
+     zoom buttons: it's recomputed every frame the map moves, which halves the
+     frame rate on a slow GPU, and shows through a 90% opaque button as nothing. */
   .three-d {
     position: absolute;
     top: 10px;
@@ -440,7 +436,6 @@
     font-size: 12px;
     font-weight: 600;
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
-    backdrop-filter: blur(12px);
   }
 
   .three-d[aria-pressed='true'] {
@@ -488,12 +483,11 @@
     z-index: 1;
   }
 
-  /* MapLibre's zoom and compass buttons, in Apple's frosted style. */
+  /* MapLibre's zoom and compass buttons, in Apple's style. */
   .maps :global(.maplibregl-ctrl-group) {
     border-radius: 8px;
     background: var(--menu-bg);
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
-    backdrop-filter: blur(12px);
   }
 
   :global(.theme-dark) .maps :global(.maplibregl-ctrl-group button .maplibregl-ctrl-icon) {

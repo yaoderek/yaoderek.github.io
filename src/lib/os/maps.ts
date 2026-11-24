@@ -7,6 +7,8 @@ export type MapPin = {
   title: string;
   created: string;
   imageUrl: string;
+  /** The picture small enough to draw twenty of, for pins and the list. */
+  thumbUrl: string;
   place: Place;
 };
 
@@ -21,6 +23,7 @@ export function mapPins(items: PhotoItem[]): MapPin[] {
             title: item.title,
             created: item.created,
             imageUrl: item.imageUrl,
+            thumbUrl: item.thumbUrl ?? item.imageUrl,
             place: item.place,
           },
         ]
@@ -161,10 +164,15 @@ type Layer = {
   type: string;
   'source-layer'?: string;
   paint?: Record<string, unknown>;
+  layout?: Record<string, unknown>;
   [key: string]: unknown;
 };
 
-type Style = { layers: Layer[]; [key: string]: unknown };
+type Style = {
+  layers: Layer[];
+  sources?: Record<string, unknown>;
+  [key: string]: unknown;
+};
 
 /** Paint for one transportation line, by which road (or casing) it draws. */
 function roadPaint(id: string, c: Palette): Record<string, unknown> | null {
@@ -190,7 +198,9 @@ function layerPaint(layer: Layer, c: Palette): Record<string, unknown> | null {
   const sourceLayer = layer['source-layer'];
 
   if (type === 'background') return { 'background-color': c.land };
-  if (type === 'raster') return { 'raster-opacity': c.relief };
+  // No crossfade: fading draws every relief tile twice, the whole time a zoom
+  // is bringing new ones in.
+  if (type === 'raster') return { 'raster-opacity': c.relief, 'raster-fade-duration': 0 };
 
   if (type === 'symbol') {
     const halo = { 'text-halo-color': c.halo };
@@ -209,7 +219,6 @@ function layerPaint(layer: Layer, c: Palette): Record<string, unknown> | null {
   if (id.startsWith('waterway')) return { 'line-color': c.water };
   if (id === 'park') return { 'fill-color': c.park, 'fill-outline-color': c.park };
   if (id === 'park_outline') return { 'line-color': c.park };
-  if (id === 'landuse_residential') return { 'fill-opacity': 0 };
   if (id === 'landcover_wood') return { 'fill-color': c.wood };
   if (id === 'landcover_grass') return { 'fill-color': c.grass };
   if (id === 'landcover_ice') return { 'fill-color': c.ice };
@@ -228,6 +237,43 @@ function layerPaint(layer: Layer, c: Palette): Record<string, unknown> | null {
   return null;
 }
 
+// A name in English, or failing that in Latin letters, or failing that as is.
+const ENGLISH_NAME = ['coalesce', ['get', 'name_en'], ['get', 'name:latin'], ['get', 'name']];
+
+// How close in a name is written in its own script as well.
+const BILINGUAL_ZOOM = 7;
+
+/**
+ * Layout for one layer. The style writes each place's name in English and again
+ * in its own script, and every script in view is more fonts to download: most
+ * of a megabyte for the opening view, which takes in half the world's. So from
+ * that far off a name is in English only; closer in there's a script or two.
+ */
+function layerLayout({ layout }: Layer): Record<string, unknown> | undefined {
+  if (!layout || !JSON.stringify(layout['text-field'] ?? '').includes('name:nonlatin')) {
+    return layout;
+  }
+  return {
+    ...layout,
+    'text-field': ['step', ['zoom'], ENGLISH_NAME, BILINGUAL_ZOOM, layout['text-field']],
+  };
+}
+
+/**
+ * The relief's tiles drawn at twice the size, so a quarter as many cover the
+ * map. It's soft shading under everything else, so the detail isn't missed.
+ */
+function thriftySources(sources: Record<string, unknown>): Record<string, unknown> {
+  return Object.fromEntries(
+    Object.entries(sources).map(([id, source]) => [
+      id,
+      (source as { type?: string }).type === 'raster'
+        ? { ...(source as object), tileSize: 512 }
+        : source,
+    ])
+  );
+}
+
 /**
  * The style with every colour swapped for Apple Maps' palette, light or dark.
  * Returns a new style; the one passed in is left as it was, so it can be
@@ -237,9 +283,18 @@ export function appleMapStyle<T extends Style>(style: T, dark: boolean): T {
   const palette = dark ? DARK : LIGHT;
   return {
     ...style,
-    layers: style.layers.map((layer) => {
-      const paint = layerPaint(layer, palette);
-      return paint ? { ...layer, paint: { ...layer.paint, ...paint } } : layer;
-    }),
+    ...(style.sources ? { sources: thriftySources(style.sources) } : {}),
+    layers: style.layers
+      // Apple doesn't tint where people live, so don't cut the shapes for it.
+      .filter((layer) => layer.id !== 'landuse_residential')
+      .map((layer) => {
+        const paint = layerPaint(layer, palette);
+        const layout = layerLayout(layer);
+        return {
+          ...layer,
+          ...(layout ? { layout } : {}),
+          ...(paint ? { paint: { ...layer.paint, ...paint } } : {}),
+        };
+      }),
   };
 }
