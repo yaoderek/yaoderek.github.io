@@ -37,6 +37,21 @@ async function toUrl(src: ImageMetadata): Promise<string> {
   return optimized.src;
 }
 
+// A pin on the map is 44px, 1.25 times that when picked, on a screen of up to 3x.
+const THUMB_SIZE = 160;
+
+/** Produce a small square of an image, for drawing it as a pin on the map. */
+async function toThumbUrl(src: ImageMetadata): Promise<string> {
+  const optimized = await getImage({
+    src,
+    width: THUMB_SIZE,
+    height: THUMB_SIZE,
+    fit: 'cover',
+    format: 'webp',
+  });
+  return optimized.src;
+}
+
 /**
  * Build the TreeInput from all four content collections.
  *
@@ -130,7 +145,9 @@ export async function getTreeInput(
           imageUrl,
           width: img.width,
           height: img.height,
-          ...(entry.data.place ? { place: entry.data.place } : {}),
+          ...(entry.data.place
+            ? { place: entry.data.place, thumbUrl: await toThumbUrl(img) }
+            : {}),
         };
       })
     );

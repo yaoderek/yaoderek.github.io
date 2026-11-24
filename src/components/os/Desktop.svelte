@@ -6,6 +6,7 @@
   import { photoAlbums, photoAt, photoWindowSize } from '../../lib/os/photos';
   import { calendarIconUrl, experienceRoles } from '../../lib/os/calendar';
   import { mapPins, type MapPin } from '../../lib/os/maps';
+  import { warmMap } from '../../lib/os/map-assets';
   import {
     pathForWin,
     urlToOpenPath,
@@ -788,6 +789,7 @@
       iconUrl: dockIcons.maps,
       running: openApps.has('maps'),
       action: () => openApp('maps'),
+      onapproach: warmMap,
     },
     {
       id: 'music',

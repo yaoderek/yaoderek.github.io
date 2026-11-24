@@ -52,6 +52,8 @@ export type PhotoItem = {
   created: string;                       // ISO date
   medium: string;
   imageUrl: string;
+  /** A small square of it, for the pictures Maps draws as pins. */
+  thumbUrl?: string;
   width: number;
   height: number;
   place?: Place;
