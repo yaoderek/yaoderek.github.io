@@ -45,8 +45,14 @@ const jsonLd = {
     <p>
       <time datetime={startIso}>{when}</time>
     </p>
-    <ul>
-      {data.highlights.map((line) => <li>{line}</li>)}
-    </ul>
+    {
+      data.highlights.length > 0 && (
+        <ul>
+          {data.highlights.map((line) => (
+            <li>{line}</li>
+          ))}
+        </ul>
+      )
+    }
   </article>
 </OsPage>

@@ -7,7 +7,8 @@
  *
  * The grid shows a fixed run of months ending at `offset` months from this
  * one, which is what the arrows in the app move: 0 is the present, -6 is half
- * a year back, and there's no floor on how far back a visitor can go.
+ * a year back, and there's no floor on how far back a visitor can go. Ahead, it
+ * goes as far as the last month of a role that's already booked.
  *
  * The roles are read back off the /experience folder node, the same way Photos
  * reads its albums, so a role is serialized once.
@@ -98,7 +99,7 @@ export function timeline(
   const bars: RoleBar[] = [];
   for (const role of roles) {
     const start = monthOf(role.start);
-    const end = role.end ? monthOf(role.end) : now;
+    const end = endMonth(role, now);
     if (end < first || start > last) continue;
 
     const from = Math.max(start, first);
@@ -107,7 +108,7 @@ export function timeline(
       role,
       from: from - first,
       span: to - from + 1,
-      running: role.end === undefined,
+      running: role.end === undefined && start <= now,
       clippedStart: start < first,
       clippedEnd: end > last,
     });
@@ -119,8 +120,30 @@ export function timeline(
 }
 
 /**
+ * How far ahead the grid goes: the months from this one to the last month of
+ * a role that's booked past it, or 0 when nothing is ahead.
+ */
+export function latestOffset(roles: ExperienceItem[], today: Date): number {
+  const now = monthIndex(today.getFullYear(), today.getMonth() + 1);
+  return Math.max(0, ...roles.map((role) => endMonth(role, now) - now));
+}
+
+/**
+ * The offset the grid opens on, and the Today button returns to: far enough
+ * ahead to show what's coming up, but never so far that today is off it.
+ */
+export function homeOffset(
+  roles: ExperienceItem[],
+  today: Date,
+  span = TIMELINE_SPAN
+): number {
+  return Math.min(latestOffset(roles, today), span - 1);
+}
+
+/**
  * The offset that brings a role into view: the current one when the role is
  * already on screen, otherwise a window ending just after the role does.
+ * `latest` is as far ahead as the grid goes.
  *
  * Deep links land on a role that may be years back, so the grid has to travel
  * to it rather than leave the visitor to page there.
@@ -129,17 +152,18 @@ export function offsetToShow(
   role: ExperienceItem,
   today: Date,
   offset: number,
-  span = TIMELINE_SPAN
+  span = TIMELINE_SPAN,
+  latest = 0
 ): number {
   const now = monthIndex(today.getFullYear(), today.getMonth() + 1);
   const last = now + offset;
   const first = last - span + 1;
   const start = monthOf(role.start);
-  const end = role.end ? monthOf(role.end) : now;
+  const end = endMonth(role, now);
 
   if (end >= first && start <= last) return offset;
-  // A month of room after the role, and never a window past the present.
-  return Math.min(0, end - now + 1);
+  // A month of room after the role, and never a window past the last booking.
+  return Math.min(latest, end - now + 1);
 }
 
 const MONTH_LABELS = [
@@ -165,6 +189,14 @@ function monthIndex(year: number, month: number): number {
 function monthOf(iso: string): number {
   const [year, month] = iso.split('-').map(Number);
   return monthIndex(year, month);
+}
+
+/**
+ * The last month a role covers. One with no end runs to this month, or is just
+ * its first month when it hasn't started.
+ */
+function endMonth(role: ExperienceItem, now: number): number {
+  return role.end ? monthOf(role.end) : Math.max(now, monthOf(role.start));
 }
 
 function daysInMonth(date: Date): number {

@@ -34,11 +34,13 @@ const iso = (date: Date) => date.toISOString().slice(0, 10);
             entry.data.end ? iso(entry.data.end) : undefined
           )}
         </p>
-        <ul>
-          {entry.data.highlights.map((line) => (
-            <li>{line}</li>
-          ))}
-        </ul>
+        {entry.data.highlights.length > 0 && (
+          <ul>
+            {entry.data.highlights.map((line) => (
+              <li>{line}</li>
+            ))}
+          </ul>
+        )}
       </section>
     ))
   }

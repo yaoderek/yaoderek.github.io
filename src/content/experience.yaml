@@ -1,6 +1,15 @@
 # Roles, newest first. Leaving `end` out means the role is still running, which
 # is what draws a bar to today's line in the Calendar app.
 # `calendar` groups roles the way named calendars group events in Calendar.
+# A role that hasn't started yet goes in with both dates; Calendar opens far
+# enough ahead to show it.
+- id: stripe
+  org: Stripe
+  role: Software engineering intern
+  calendar: work
+  start: 2027-01-01
+  end: 2027-03-31
+  highlights: []
 - id: contour
   org: Contour
   role: Software engineering intern

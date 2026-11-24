@@ -2,6 +2,8 @@ import { describe, it, expect } from 'vitest';
 import {
   calendarIconUrl,
   experienceRoles,
+  homeOffset,
+  latestOffset,
   offsetToShow,
   roleAt,
   timeline,
@@ -169,6 +171,54 @@ describe('timeline', () => {
     const { months, bars } = timeline([contour], today, -48);
     expect(months).toHaveLength(12);
     expect(bars).toEqual([]);
+  });
+});
+
+describe('roles that have not started', () => {
+  // Late November 2026, with an internship booked for the winter.
+  const today = new Date(2026, 10, 24);
+  const stripe = role('stripe', '2027-01-01', '2027-03-31');
+
+  it('leaves the present as the last month when nothing is ahead', () => {
+    expect(latestOffset([contour, oracle, lab], today)).toBe(0);
+    expect(homeOffset([contour, oracle, lab], today)).toBe(0);
+    expect(latestOffset([], today)).toBe(0);
+  });
+
+  it('reaches ahead to the last month of an upcoming role', () => {
+    expect(latestOffset([stripe, contour, lab], today)).toBe(4);
+    expect(homeOffset([stripe, contour, lab], today)).toBe(4);
+  });
+
+  it('never opens so far ahead that today is off the grid', () => {
+    const far = role('far', '2028-01-01', '2028-06-30');
+    expect(latestOffset([far], today)).toBe(19);
+    expect(homeOffset([far], today, 6)).toBe(5);
+    expect(timeline([far], today, 5, 6).today).not.toBeNull();
+  });
+
+  it('draws the upcoming role past today, and stops running ones at it', () => {
+    const { months, bars, today: at } = timeline([stripe, lab], today, 4);
+    expect(months[11]).toEqual({ label: 'Mar', year: 2027, month: 3 });
+    const [ahead, running] = bars;
+    expect(ahead.from).toBe(9);
+    expect(ahead.span).toBe(3);
+    expect(ahead.running).toBe(false);
+    expect(running.from + running.span - 1).toBe(7);
+    expect(Math.floor(at!)).toBe(7);
+  });
+
+  it('draws an upcoming role with no end as its first month, not as running', () => {
+    const open = role('open', '2027-01-01');
+    expect(latestOffset([open], today)).toBe(2);
+    const bar = timeline([open], today, 2).bars[0];
+    expect(bar.from).toBe(11);
+    expect(bar.span).toBe(1);
+    expect(bar.running).toBe(false);
+  });
+
+  it('travels ahead to it, no further than the last booked month', () => {
+    expect(offsetToShow(stripe, today, -12, 12, 4)).toBe(4);
   });
 });
 

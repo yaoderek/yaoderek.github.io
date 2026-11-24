@@ -1,8 +1,18 @@
 // @vitest-environment jsdom
 import { mount, unmount } from 'svelte';
-import { test, expect, beforeAll, afterEach } from 'vitest';
+import { test, expect, vi, beforeAll, beforeEach, afterEach } from 'vitest';
 import Desktop from './Desktop.svelte';
 import type { ExperienceItem, FSNode } from '../../lib/os/types';
+
+// The Calendar draws around today, so today is pinned. Only Date is faked: the
+// tests wait on real timers.
+beforeEach(() => {
+  vi.useFakeTimers({ toFake: ['Date'], now: new Date(2026, 8, 15) });
+});
+
+afterEach(() => {
+  vi.useRealTimers();
+});
 
 // Minimal stubs for browser APIs missing in jsdom
 beforeAll(() => {
@@ -583,6 +593,53 @@ test('the timeline pages back to older roles and returns to today', async () => 
   await new Promise((r) => setTimeout(r, 30));
   expect(swim()).toBeNull();
   expect(home.disabled).toBe(true);
+
+  unmount(app);
+  target.remove();
+});
+
+test('a role that has not started shows past today, as far as the timeline goes', async () => {
+  const upcoming: ExperienceItem = {
+    id: 'stripe',
+    org: 'Stripe',
+    role: 'Software engineering intern',
+    calendar: 'work',
+    start: '2027-01-01',
+    end: '2027-03-31',
+    highlights: [],
+  };
+  const tree: FSNode = {
+    ...lifeTree,
+    children: lifeTree.children!.map((node) =>
+      node.path === '/experience'
+        ? {
+            ...node,
+            open: {
+              app: 'calendar',
+              props: { roles: [upcoming, ...roles], role: null },
+            },
+          }
+        : node
+    ),
+  };
+  const target = document.createElement('div');
+  document.body.appendChild(target);
+  const app = mount(Desktop, {
+    target,
+    props: { tree, initialPath: '/experience', showResume: false },
+  });
+  await new Promise((r) => setTimeout(r, 50));
+
+  const calendar = target.querySelector('[role="dialog"][aria-label="Calendar"]')!;
+  expect(calendar.textContent).toContain('Apr 2026 – Mar 2027');
+  expect(calendar.querySelector('button[aria-label^="Stripe"]')).not.toBeNull();
+  expect(calendar.querySelector('.now')).not.toBeNull();
+  // Nothing written about it yet, so no empty list either.
+  expect(calendar.querySelector('.highlights')).toBeNull();
+  const later = calendar.querySelector<HTMLButtonElement>(
+    'button[aria-label="Later months"]'
+  )!;
+  expect(later.disabled).toBe(true);
 
   unmount(app);
   target.remove();
