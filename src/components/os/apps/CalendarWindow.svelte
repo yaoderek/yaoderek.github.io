@@ -5,6 +5,8 @@
     CALENDARS,
     COMPACT_SPAN,
     TIMELINE_SPAN,
+    homeOffset,
+    latestOffset,
     offsetToShow,
     roleAt,
     timeline,
@@ -33,6 +35,10 @@
   const span = $derived(compact ? COMPACT_SPAN : TIMELINE_SPAN);
   // Half a window per press, so a page back keeps some of what was on screen.
   const step = $derived(Math.max(1, Math.round(span / 2)));
+  // Where the grid opens, and as far ahead as it goes: both reach past today
+  // only for a role that's already booked.
+  const home = $derived(homeOffset(roles, today, span));
+  const latest = $derived(latestOffset(roles, today));
 
   // `role` seeds the selection; the effect below re-targets an open window when
   // the window manager points it at a different role.
@@ -40,13 +46,11 @@
   const opened = roleAt(roles, role);
   let selectedId = $state(opened?.id ?? roles[0]?.id ?? null);
 
-  // The grid runs back from the present, except when it was opened on a role
+  // The grid opens around the present, except when it was opened on a role
   // from years ago, which it starts on instead.
+  // svelte-ignore state_referenced_locally
   let offset = $state(
-    opened
-      // svelte-ignore state_referenced_locally
-      ? offsetToShow(opened, today, 0, compact ? COMPACT_SPAN : TIMELINE_SPAN)
-      : 0
+    opened ? offsetToShow(opened, today, home, span, latest) : home
   );
 
   // The props arrive through a spread, so this effect re-runs on any window
@@ -61,7 +65,7 @@
     if (!found) return;
     selectedId = found.id;
     // A role from years back is off the opening window, so travel to it.
-    offset = offsetToShow(found, today, offset, span);
+    offset = offsetToShow(found, today, offset, span, latest);
   });
 
   // Hiding a calendar hides its bars and what's written about them.
@@ -87,9 +91,9 @@
     shown = next;
   }
 
-  /** Page the grid. Forward stops at the present: there's nothing ahead. */
+  /** Page the grid. Forward stops at the last role that's booked. */
   function page(direction: number) {
-    offset = Math.min(0, offset + direction * step);
+    offset = Math.min(latest, offset + direction * step);
   }
 
   /** Step through the roles on the grid, the way arrow keys move a selection. */
@@ -144,15 +148,15 @@
         <button
           class="today"
           type="button"
-          onclick={() => (offset = 0)}
-          disabled={offset === 0}
+          onclick={() => (offset = home)}
+          disabled={offset === home}
         >
           Today
         </button>
         <button
           type="button"
           onclick={() => page(1)}
-          disabled={offset === 0}
+          disabled={offset >= latest}
           aria-label="Later months"
         >
           ›
@@ -249,11 +253,13 @@
               {formatMonthRange(selected.start, selected.end)}
               {#if selected.note}<span class="detail-note">· {selected.note}</span>{/if}
             </p>
-            <ul class="highlights">
-              {#each selected.highlights as line (line)}
-                <li>{line}</li>
-              {/each}
-            </ul>
+            {#if selected.highlights.length > 0}
+              <ul class="highlights">
+                {#each selected.highlights as line (line)}
+                  <li>{line}</li>
+                {/each}
+              </ul>
+            {/if}
           </section>
         {/if}
       </div>
@@ -499,7 +505,9 @@
     text-overflow: ellipsis;
   }
 
+  /* On a short bar the role gives way before the name does. */
   .event-role {
+    flex-shrink: 1000;
     font-size: 11px;
     color: var(--text-dim);
     overflow: hidden;
